@@ -28,12 +28,10 @@ func Logger() *logrus.Logger {
 		}
 
 		switch viper.GetString("log.logformat") {
-		case "text":
-			logger.Formatter = new(logrus.TextFormatter)
 		case "json":
-			logger.Formatter = new(logrus.JSONFormatter)
+			logger.Formatter = &logrus.JSONFormatter{}
 		default:
-			logger.Formatter = new(logrus.TextFormatter)
+			logger.Formatter = &logrus.TextFormatter{FullTimestamp: true}
 		}
 
 	}
