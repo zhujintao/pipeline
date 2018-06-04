@@ -1,7 +1,14 @@
 package model
 
 import (
+	"database/sql/driver"
+	"fmt"
+	"reflect"
+	"regexp"
+	"strconv"
 	"sync"
+	"time"
+	"unicode"
 
 	"github.com/banzaicloud/bank-vaults/database"
 	"github.com/banzaicloud/pipeline/config"
@@ -10,6 +17,11 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+)
+
+var (
+	sqlRegexp                = regexp.MustCompile(`\?`)
+	numericPlaceHolderRegexp = regexp.MustCompile(`\$\d+`)
 )
 
 var dbOnce sync.Once
@@ -21,9 +33,84 @@ func init() {
 	logger = config.Logger()
 }
 
+type logrusAdapter struct {
+}
+
+func isPrintable(s string) bool {
+	for _, r := range s {
+		if !unicode.IsPrint(r) {
+			return false
+		}
+	}
+	return true
+}
+
+func (*logrusAdapter) Print(values ...interface{}) {
+	fields := logrus.Fields{}
+	if len(values) > 1 {
+		var (
+			sql             string
+			formattedValues []string
+			level           = values[0]
+		)
+
+		//fields["source"] = values[1]
+		fields["duration"] = fmt.Sprintf("%fms", float64(values[2].(time.Duration).Nanoseconds()/1e4)/100.0)
+
+		if level == "sql" {
+			for _, value := range values[4].([]interface{}) {
+				indirectValue := reflect.Indirect(reflect.ValueOf(value))
+				if indirectValue.IsValid() {
+					value = indirectValue.Interface()
+					if t, ok := value.(time.Time); ok {
+						formattedValues = append(formattedValues, fmt.Sprintf("'%v'", t.Format("2006-01-02 15:04:05")))
+					} else if b, ok := value.([]byte); ok {
+						if str := string(b); isPrintable(str) {
+							formattedValues = append(formattedValues, fmt.Sprintf("'%v'", str))
+						} else {
+							formattedValues = append(formattedValues, "'<binary>'")
+						}
+					} else if r, ok := value.(driver.Valuer); ok {
+						if value, err := r.Value(); err == nil && value != nil {
+							formattedValues = append(formattedValues, fmt.Sprintf("'%v'", value))
+						} else {
+							formattedValues = append(formattedValues, "NULL")
+						}
+					} else {
+						formattedValues = append(formattedValues, fmt.Sprintf("'%v'", value))
+					}
+				} else {
+					formattedValues = append(formattedValues, "NULL")
+				}
+			}
+
+			// differentiate between $n placeholders or else treat like ?
+			if numericPlaceHolderRegexp.MatchString(values[3].(string)) {
+				sql = values[3].(string)
+				for index, value := range formattedValues {
+					placeholder := fmt.Sprintf(`\$%d([^\d]|$)`, index+1)
+					sql = regexp.MustCompile(placeholder).ReplaceAllString(sql, value+"$1")
+				}
+			} else {
+				formattedValuesLength := len(formattedValues)
+				for index, value := range sqlRegexp.Split(values[3].(string), -1) {
+					sql += value
+					if index < formattedValuesLength {
+						sql += formattedValues[index]
+					}
+				}
+			}
+
+			fields["sql"] = sql
+			logger.WithFields(fields).Print(strconv.FormatInt(values[5].(int64), 10) + " rows affected or returned")
+		}
+	}
+}
+
 func initDatabase() {
 	dbName := viper.GetString("database.dbname")
 	db = ConnectDB(dbName)
+	db.SetLogger(&logrusAdapter{})
 }
 
 // GetDataSource returns with datasource by database name
