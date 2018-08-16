@@ -1,6 +1,7 @@
 package api
 
 import (
+		"io/ioutil"
 	"net/http"
 
 	"github.com/banzaicloud/pipeline/internal/platform/database"
@@ -11,6 +12,7 @@ import (
 	oracle "github.com/banzaicloud/pipeline/pkg/providers/oracle/model"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -23,9 +25,21 @@ const (
 func GetClusterProfiles(c *gin.Context) {
 
 	distributionType := c.Param(distributionTypeKey)
-	log.Infof("Start getting saved cluster profiles [%s]", distributionType)
+	//log.Infof("Start getting saved cluster profiles [%s]", distributionType)
+	//
+	//resp, err := getProfiles(distributionType)
+	//if err != nil {
+	//	log.Errorf("Error during getting defaults to %s: %s", distributionType, err.Error())
+	//	c.JSON(http.StatusBadRequest, pkgCommon.ErrorResponse{
+	//		Code:    http.StatusBadRequest,
+	//		Message: err.Error(),
+	//		Error:   err.Error(),
+	//	})
+	//} else {
+	//	c.JSON(http.StatusOK, resp)
+	//}
 
-	resp, err := getProfiles(distributionType)
+	defaults, images, err := readFiles()
 	if err != nil {
 		log.Errorf("Error during getting defaults to %s: %s", distributionType, err.Error())
 		c.JSON(http.StatusBadRequest, pkgCommon.ErrorResponse{
@@ -33,10 +47,143 @@ func GetClusterProfiles(c *gin.Context) {
 			Message: err.Error(),
 			Error:   err.Error(),
 		})
-	} else {
-		c.JSON(http.StatusOK, resp)
 	}
 
+	c.JSON(http.StatusOK, gin.H{
+		"defaults": defaults,
+		"images":   images,
+	})
+
+}
+
+func readFiles() (defaults Defaults, images DefaultAmazonImages, err error) {
+
+	if err = readYaml("defaults/defaults.yaml", &defaults); err != nil {
+		return
+	}
+
+	err = readYaml("defaults/defaults-amazon-images.yaml", &images)
+
+	return
+}
+
+func readYaml(filePath string, out interface{}) error {
+	f, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+
+	err = yaml.Unmarshal(f, out)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type DefaultAmazonImages struct {
+	EC2 AmazonImages `yaml:"ec2"`
+	EKS AmazonImages `yaml:"eks"`
+}
+
+type AmazonImages map[string]string
+
+type Defaults struct {
+	DefaultNodePoolName string               `yaml:"defaultNodePoolName"`
+	Distributions       DefaultsDistribution `yaml:"distributions"`
+}
+
+type DefaultsDistribution struct {
+	ACSK DefaultsACSK `yaml:"acsk"`
+	AKS  DefaultsAKS  `yaml:"aks"`
+	EC2  DefaultsEC2  `yaml:"ec2"`
+	EKS  DefaultsEKS  `yaml:"eks"`
+	GKE  DefaultsGKE  `yaml:"gke"`
+	OKE  DefaultsOKE  `yaml:"oke"`
+}
+
+type DefaultsACSK struct {
+	Location                 string                `yaml:"location"`
+	RegionId                 string                `yaml:"regionId"`
+	ZoneId                   string                `yaml:"zoneId"`
+	MasterInstanceType       string                `yaml:"masterInstanceType"`
+	MasterSystemDiskCategory string                `yaml:"masterSystemDiskCategory"`
+	NodePools                DefaultsACSKNodePools `yaml:"nodePools"`
+}
+
+type DefaultsAKS struct {
+	Location  string               `yaml:"location"`
+	Version   string               `yaml:"version"`
+	NodePools DefaultsAKSNodePools `yaml:"nodePools"`
+}
+
+type DefaultsEC2 struct {
+	Location           string                  `yaml:"location"`
+	MasterInstanceType string                  `yaml:"masterInstanceType"`
+	NodePools          DefaultsAmazonNodePools `yaml:"nodePools"`
+}
+
+type DefaultsEKS struct {
+	Location  string                  `yaml:"location"`
+	Version   string                  `yaml:"version"`
+	NodePools DefaultsAmazonNodePools `yaml:"nodePools"`
+}
+
+type DefaultsGKE struct {
+	Location      string               `yaml:"location"`
+	MasterVersion string               `yaml:"masterVersion"`
+	NodeVersion   string               `yaml:"nodeVersion"`
+	NodePools     DefaultsGKENodePools `yaml:"nodePools"`
+}
+
+type DefaultsOKE struct {
+	Location  string               `yaml:"location"`
+	Version   string               `yaml:"version"`
+	NodePools DefaultsOKENodePools `yaml:"nodePools"`
+}
+
+type DefaultsACSKNodePools struct {
+	Autoscaling        bool   `yaml:"autoscaling"`
+	Count              uint   `yaml:"count"`
+	MinCount           uint   `yaml:"minCount"`
+	MaxCount           uint   `yaml:"maxCount"`
+	Image              string `yaml:"image"`
+	InstanceType       string `yaml:"instanceType"`
+	SystemDiskCategory string `yaml:"systemDiskCategory"`
+}
+
+type DefaultsAKSNodePools struct {
+	Autoscaling  bool   `yaml:"autoscaling"`
+	Count        uint   `yaml:"count"`
+	MinCount     uint   `yaml:"minCount"`
+	MaxCount     uint   `yaml:"maxCount"`
+	InstanceType string `yaml:"instanceType"`
+}
+
+type DefaultsAmazonNodePools struct {
+	InstanceType string `yaml:"instanceType"`
+	SpotPrice    string `yaml:"spotPrice"`
+	Autoscaling  bool   `yaml:"autoscaling"`
+	Count        uint   `yaml:"count"`
+	MinCount     uint   `yaml:"minCount"`
+	MaxCount     uint   `yaml:"maxCount"`
+}
+
+type DefaultsGKENodePools struct {
+	Autoscaling  bool   `yaml:"autoscaling"`
+	Count        uint   `yaml:"count"`
+	MinCount     uint   `yaml:"minCount"`
+	MaxCount     uint   `yaml:"maxCount"`
+	InstanceType string `yaml:"instanceType"`
+}
+
+type DefaultsOKENodePools struct {
+	Version  string `yaml:"version"`
+	Count    uint   `yaml:"count"`
+	MinCount uint   `yaml:"minCount"`
+	MaxCount uint   `yaml:"maxCount"`
+	Image    string `yaml:"image"`
+	Shape    string `yaml:"shape"`
 }
 
 // AddClusterProfile handles /profiles/cluster/:type POST api endpoint.

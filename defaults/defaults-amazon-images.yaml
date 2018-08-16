@@ -1,0 +1,18 @@
+---
+ec2:
+  ap-northeast-1: ami-84f19869
+  ap-northeast-2: ami-00be096e
+  ap-south-1: ami-1162517e
+  ap-southeast-1: ami-d385c039
+  ap-southeast-2: ami-4719bd25
+  ca-central-1: ami-5a88053e
+  eu-central-1: ami-2bfcfdc0
+  eu-west-1: ami-4d485ca7
+  eu-west-2: ami-72709b15
+  eu-west-3: ami-619a2a1c
+  sa-east-1: ami-64a78108
+  us-west-1: ami-1c7b997f
+  us-west-2: ami-e7d28e9f
+eks:
+  us-east-1: ami-0fef2bff3c2e2da93
+  us-west-2: ami-0ea01e1d1dea65b5c

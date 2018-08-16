@@ -1,0 +1,66 @@
+---
+defaultNodePoolName: pool1
+distributions:
+  acsk:
+    location: eu-west-1
+    regionId: eu-central-1
+    zoneId: eu-central-1a
+    masterInstanceType: ecs.sn1ne.large
+    masterSystemDiskCategory: cloud_efficiency
+    nodePools:
+      autoscaling: false
+      count: 1
+      minCount: 1
+      maxCount: 2
+      image: centos_7
+      instanceType: ecs.sn1ne.large
+      systemDiskCategory: cloud_efficiency
+  aks:
+    location: eastus
+    version: 1.9.2
+    nodePools:
+      autoscaling: false
+      count: 1
+      minCount: 1
+      maxCount: 2
+      instanceType: Standard_B2ms
+  ec2:
+    location: eu-west-1
+    masterInstanceType: m4.xlarge
+    nodePools:
+      instanceType: m4.xlarge
+      spotPrice: '0.2'
+      autoscaling: false
+      count: 1
+      minCount: 1
+      maxCount: 2
+  eks:
+    location: us-west-2
+    version: '1.10'
+    nodePools:
+      instanceType: m4.xlarge
+      spotPrice: '0.2'
+      autoscaling: false
+      count: 1
+      minCount: 1
+      maxCount: 2
+  gke:
+    location: us-central1-a
+    masterVersion: '1.9'
+    nodeVersion: '1.9'
+    nodePools:
+      autoscaling: false
+      count: 1
+      minCount: 1
+      maxCount: 2
+      instanceType: n1-standard-1
+  oke:
+    location: eu-frankfurt-1
+    version: v1.10.3
+    nodePools:
+      version: v1.10.3
+      count: 1
+      minCount: 1
+      maxCount: 2
+      image: Oracle-Linux-7.4
+      shape: VM.Standard1.1
