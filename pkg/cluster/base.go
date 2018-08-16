@@ -90,8 +90,8 @@ type CreateClusterRequest struct {
 	Location    string                   `json:"location"`
 	Cloud       string                   `json:"cloud" binding:"required"`
 	SecretId    string                   `json:"secretId" binding:"required"`
-	ProfileName string                   `json:"profileName"`
-	PostHooks   PostHooks                `json:"postHooks"`
+	ProfileName string                   `json:"profileName,omitempty"`
+	PostHooks   PostHooks                `json:"postHooks,omitempty"`
 	Properties  *CreateClusterProperties `json:"properties" binding:"required"`
 }
 

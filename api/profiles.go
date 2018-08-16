@@ -1,14 +1,16 @@
 package api
 
 import (
-		"io/ioutil"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/banzaicloud/pipeline/internal/platform/database"
 	"github.com/banzaicloud/pipeline/model/defaults"
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
+	acsk2 "github.com/banzaicloud/pipeline/pkg/cluster/acsk"
 	pkgCommon "github.com/banzaicloud/pipeline/pkg/common"
 	pkgErrors "github.com/banzaicloud/pipeline/pkg/errors"
+	"github.com/banzaicloud/pipeline/pkg/providers"
 	oracle "github.com/banzaicloud/pipeline/pkg/providers/oracle/model"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -39,21 +41,56 @@ func GetClusterProfiles(c *gin.Context) {
 	//	c.JSON(http.StatusOK, resp)
 	//}
 
-	defaults, images, err := readFiles()
+	profile, err := getDefaultProfile(distributionType)
 	if err != nil {
-		log.Errorf("Error during getting defaults to %s: %s", distributionType, err.Error())
 		c.JSON(http.StatusBadRequest, pkgCommon.ErrorResponse{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 			Error:   err.Error(),
 		})
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"defaults": defaults,
-		"images":   images,
-	})
+	c.JSON(http.StatusOK, profile)
 
+}
+
+func getDefaultProfile(distributionType string) (*pkgCluster.CreateClusterRequest, error) {
+	defaults, _, err := readFiles()
+	if err != nil {
+		return nil, err
+	}
+
+	return createACSKRequest(&defaults.Distributions.ACSK, defaults.DefaultNodePoolName), nil
+
+}
+
+func createACSKRequest(acsk *DefaultsACSK, defaultNodePoolName string) *pkgCluster.CreateClusterRequest {
+	nodepools := make(acsk2.NodePools)
+	nodepools[defaultNodePoolName] = &acsk2.NodePool{
+		InstanceType:       acsk.NodePools.InstanceType,
+		SystemDiskCategory: acsk.NodePools.SystemDiskCategory,
+		//SystemDiskSize:     acsk.NodePools.SystemDiskSize,  // todo missing
+		//LoginPassword:      acsk.NodePools.LoginPassword,  // todo missing
+		Count: int(acsk.NodePools.Count),
+		Image: acsk.NodePools.Image,
+	}
+
+	return &pkgCluster.CreateClusterRequest{
+		Location:    acsk.Location,
+		Cloud:       providers.Alibaba,
+		Properties: &pkgCluster.CreateClusterProperties{
+			CreateClusterACSK: &acsk2.CreateClusterACSK{
+				RegionID:                 acsk.RegionId,
+				ZoneID:                   acsk.ZoneId,
+				MasterInstanceType:       acsk.MasterInstanceType,
+				MasterSystemDiskCategory: acsk.MasterSystemDiskCategory,
+				//MasterSystemDiskSize:     acsk.MasterSystemDiskSize, // todo missing
+				//KeyPair:                  acsk.KeyPair, // todo missing
+				NodePools: nodepools,
+			},
+		},
+	}
 }
 
 func readFiles() (defaults Defaults, images DefaultAmazonImages, err error) {
