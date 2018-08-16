@@ -8,6 +8,7 @@ import (
 	"github.com/banzaicloud/pipeline/model/defaults"
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
 	acsk2 "github.com/banzaicloud/pipeline/pkg/cluster/acsk"
+	ec22 "github.com/banzaicloud/pipeline/pkg/cluster/ec2"
 	pkgCommon "github.com/banzaicloud/pipeline/pkg/common"
 	pkgErrors "github.com/banzaicloud/pipeline/pkg/errors"
 	"github.com/banzaicloud/pipeline/pkg/providers"
@@ -56,13 +57,54 @@ func GetClusterProfiles(c *gin.Context) {
 }
 
 func getDefaultProfile(distributionType string) (*pkgCluster.CreateClusterRequest, error) {
-	defaults, _, err := readFiles()
+	defaults, images, err := readFiles()
 	if err != nil {
 		return nil, err
 	}
 
-	return createACSKRequest(&defaults.Distributions.ACSK, defaults.DefaultNodePoolName), nil
+	switch distributionType {
+	case pkgCluster.ACSK:
+		return createACSKRequest(&defaults.Distributions.ACSK, defaults.DefaultNodePoolName), nil
+	case pkgCluster.EC2:
+		return createEC2Request(&defaults.Distributions.EC2, defaults.DefaultNodePoolName, images), nil
 
+	}
+
+	return nil, errors.New("not supported distribution")
+}
+
+func createEC2Request(ec2 *DefaultsEC2, defaultNodePoolName string, images DefaultAmazonImages) *pkgCluster.CreateClusterRequest {
+
+	image := getEC2Image(images.EC2, ec2.Location)
+
+	nodepools := make(map[string]*ec22.NodePool)
+	nodepools[defaultNodePoolName] = &ec22.NodePool{
+		InstanceType: ec2.NodePools.InstanceType,
+		SpotPrice:    ec2.NodePools.SpotPrice,
+		Autoscaling:  ec2.NodePools.Autoscaling,
+		MinCount:     ec2.NodePools.MinCount,
+		MaxCount:     ec2.NodePools.MaxCount,
+		Count:        ec2.NodePools.Count,
+		Image:        image,
+	}
+
+	return &pkgCluster.CreateClusterRequest{
+		Location: ec2.Location,
+		Cloud:    pkgCluster.Amazon,
+		Properties: &pkgCluster.CreateClusterProperties{
+			CreateClusterEC2: &ec22.CreateClusterEC2{
+				NodePools: nodepools,
+				Master: &ec22.CreateAmazonMaster{
+					InstanceType: ec2.MasterInstanceType,
+					Image:        image,
+				},
+			},
+		},
+	}
+}
+
+func getEC2Image(images AmazonImages, location string) string {
+	return images[location]
 }
 
 func createACSKRequest(acsk *DefaultsACSK, defaultNodePoolName string) *pkgCluster.CreateClusterRequest {
@@ -77,8 +119,8 @@ func createACSKRequest(acsk *DefaultsACSK, defaultNodePoolName string) *pkgClust
 	}
 
 	return &pkgCluster.CreateClusterRequest{
-		Location:    acsk.Location,
-		Cloud:       providers.Alibaba,
+		Location: acsk.Location,
+		Cloud:    providers.Alibaba,
 		Properties: &pkgCluster.CreateClusterProperties{
 			CreateClusterACSK: &acsk2.CreateClusterACSK{
 				RegionID:                 acsk.RegionId,
@@ -181,9 +223,9 @@ type DefaultsOKE struct {
 
 type DefaultsACSKNodePools struct {
 	Autoscaling        bool   `yaml:"autoscaling"`
-	Count              uint   `yaml:"count"`
-	MinCount           uint   `yaml:"minCount"`
-	MaxCount           uint   `yaml:"maxCount"`
+	Count              int    `yaml:"count"`
+	MinCount           int    `yaml:"minCount"`
+	MaxCount           int    `yaml:"maxCount"`
 	Image              string `yaml:"image"`
 	InstanceType       string `yaml:"instanceType"`
 	SystemDiskCategory string `yaml:"systemDiskCategory"`
@@ -191,9 +233,9 @@ type DefaultsACSKNodePools struct {
 
 type DefaultsAKSNodePools struct {
 	Autoscaling  bool   `yaml:"autoscaling"`
-	Count        uint   `yaml:"count"`
-	MinCount     uint   `yaml:"minCount"`
-	MaxCount     uint   `yaml:"maxCount"`
+	Count        int    `yaml:"count"`
+	MinCount     int    `yaml:"minCount"`
+	MaxCount     int    `yaml:"maxCount"`
 	InstanceType string `yaml:"instanceType"`
 }
 
@@ -201,24 +243,24 @@ type DefaultsAmazonNodePools struct {
 	InstanceType string `yaml:"instanceType"`
 	SpotPrice    string `yaml:"spotPrice"`
 	Autoscaling  bool   `yaml:"autoscaling"`
-	Count        uint   `yaml:"count"`
-	MinCount     uint   `yaml:"minCount"`
-	MaxCount     uint   `yaml:"maxCount"`
+	Count        int    `yaml:"count"`
+	MinCount     int    `yaml:"minCount"`
+	MaxCount     int    `yaml:"maxCount"`
 }
 
 type DefaultsGKENodePools struct {
 	Autoscaling  bool   `yaml:"autoscaling"`
-	Count        uint   `yaml:"count"`
-	MinCount     uint   `yaml:"minCount"`
-	MaxCount     uint   `yaml:"maxCount"`
+	Count        int    `yaml:"count"`
+	MinCount     int    `yaml:"minCount"`
+	MaxCount     int    `yaml:"maxCount"`
 	InstanceType string `yaml:"instanceType"`
 }
 
 type DefaultsOKENodePools struct {
 	Version  string `yaml:"version"`
-	Count    uint   `yaml:"count"`
-	MinCount uint   `yaml:"minCount"`
-	MaxCount uint   `yaml:"maxCount"`
+	Count    int    `yaml:"count"`
+	MinCount int    `yaml:"minCount"`
+	MaxCount int    `yaml:"maxCount"`
 	Image    string `yaml:"image"`
 	Shape    string `yaml:"shape"`
 }
