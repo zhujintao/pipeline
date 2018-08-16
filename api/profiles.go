@@ -9,6 +9,7 @@ import (
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
 	acsk2 "github.com/banzaicloud/pipeline/pkg/cluster/acsk"
 	ec22 "github.com/banzaicloud/pipeline/pkg/cluster/ec2"
+	eks2 "github.com/banzaicloud/pipeline/pkg/cluster/eks"
 	pkgCommon "github.com/banzaicloud/pipeline/pkg/common"
 	pkgErrors "github.com/banzaicloud/pipeline/pkg/errors"
 	"github.com/banzaicloud/pipeline/pkg/providers"
@@ -67,15 +68,45 @@ func getDefaultProfile(distributionType string) (*pkgCluster.CreateClusterReques
 		return createACSKRequest(&defaults.Distributions.ACSK, defaults.DefaultNodePoolName), nil
 	case pkgCluster.EC2:
 		return createEC2Request(&defaults.Distributions.EC2, defaults.DefaultNodePoolName, images), nil
+	case pkgCluster.EKS:
+		return createEKSRequest(&defaults.Distributions.EKS, defaults.DefaultNodePoolName, images), nil
 
 	}
 
 	return nil, errors.New("not supported distribution")
 }
 
+func createEKSRequest(eks *DefaultsEKS, defaultNodePoolName string, images DefaultAmazonImages) *pkgCluster.CreateClusterRequest {
+
+	image := getAmazonImage(images.EKS, eks.Location)
+
+	nodepools := make(map[string]*ec22.NodePool)
+	nodepools[defaultNodePoolName] = &ec22.NodePool{
+		InstanceType: eks.NodePools.InstanceType,
+		SpotPrice:    eks.NodePools.SpotPrice,
+		Autoscaling:  eks.NodePools.Autoscaling,
+		MinCount:     eks.NodePools.MinCount,
+		MaxCount:     eks.NodePools.MaxCount,
+		Count:        eks.NodePools.Count,
+		Image:        image,
+	}
+
+	return &pkgCluster.CreateClusterRequest{
+		Location: eks.Location,
+		Cloud:    pkgCluster.Amazon,
+		Properties: &pkgCluster.CreateClusterProperties{
+			CreateClusterEKS: &eks2.CreateClusterEKS{
+				Version:   eks.Version,
+				NodePools: nodepools,
+			},
+		},
+	}
+
+}
+
 func createEC2Request(ec2 *DefaultsEC2, defaultNodePoolName string, images DefaultAmazonImages) *pkgCluster.CreateClusterRequest {
 
-	image := getEC2Image(images.EC2, ec2.Location)
+	image := getAmazonImage(images.EC2, ec2.Location)
 
 	nodepools := make(map[string]*ec22.NodePool)
 	nodepools[defaultNodePoolName] = &ec22.NodePool{
@@ -103,7 +134,7 @@ func createEC2Request(ec2 *DefaultsEC2, defaultNodePoolName string, images Defau
 	}
 }
 
-func getEC2Image(images AmazonImages, location string) string {
+func getAmazonImage(images AmazonImages, location string) string {
 	return images[location]
 }
 
