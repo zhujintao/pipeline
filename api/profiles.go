@@ -8,6 +8,7 @@ import (
 	"github.com/banzaicloud/pipeline/model/defaults"
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
 	acsk2 "github.com/banzaicloud/pipeline/pkg/cluster/acsk"
+	aks2 "github.com/banzaicloud/pipeline/pkg/cluster/aks"
 	ec22 "github.com/banzaicloud/pipeline/pkg/cluster/ec2"
 	eks2 "github.com/banzaicloud/pipeline/pkg/cluster/eks"
 	pkgCommon "github.com/banzaicloud/pipeline/pkg/common"
@@ -66,6 +67,8 @@ func getDefaultProfile(distributionType string) (*pkgCluster.CreateClusterReques
 	switch distributionType {
 	case pkgCluster.ACSK:
 		return createACSKRequest(&defaults.Distributions.ACSK, defaults.DefaultNodePoolName), nil
+	case pkgCluster.AKS:
+		return createAKSRequest(&defaults.Distributions.AKS, defaults.DefaultNodePoolName), nil
 	case pkgCluster.EC2:
 		return createEC2Request(&defaults.Distributions.EC2, defaults.DefaultNodePoolName, images), nil
 	case pkgCluster.EKS:
@@ -136,6 +139,29 @@ func createEC2Request(ec2 *DefaultsEC2, defaultNodePoolName string, images Defau
 
 func getAmazonImage(images AmazonImages, location string) string {
 	return images[location]
+}
+
+func createAKSRequest(aks *DefaultsAKS, defaultNodePoolName string) *pkgCluster.CreateClusterRequest {
+
+	nodepool := make(map[string]*aks2.NodePoolCreate)
+	nodepool[defaultNodePoolName] = &aks2.NodePoolCreate{
+		Autoscaling:      aks.NodePools.Autoscaling,
+		MinCount:         aks.NodePools.MinCount,
+		MaxCount:         aks.NodePools.MaxCount,
+		Count:            aks.NodePools.Count,
+		NodeInstanceType: aks.NodePools.InstanceType,
+	}
+
+	return &pkgCluster.CreateClusterRequest{
+		Location: aks.Location,
+		Cloud:    pkgCluster.Azure,
+		Properties: &pkgCluster.CreateClusterProperties{
+			CreateClusterAKS: &aks2.CreateClusterAKS{
+				KubernetesVersion: aks.Version,
+				NodePools:         nodepool,
+			},
+		},
+	}
 }
 
 func createACSKRequest(acsk *DefaultsACSK, defaultNodePoolName string) *pkgCluster.CreateClusterRequest {
