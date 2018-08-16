@@ -11,6 +11,7 @@ import (
 	aks2 "github.com/banzaicloud/pipeline/pkg/cluster/aks"
 	ec22 "github.com/banzaicloud/pipeline/pkg/cluster/ec2"
 	eks2 "github.com/banzaicloud/pipeline/pkg/cluster/eks"
+	gke2 "github.com/banzaicloud/pipeline/pkg/cluster/gke"
 	pkgCommon "github.com/banzaicloud/pipeline/pkg/common"
 	pkgErrors "github.com/banzaicloud/pipeline/pkg/errors"
 	"github.com/banzaicloud/pipeline/pkg/providers"
@@ -73,10 +74,39 @@ func getDefaultProfile(distributionType string) (*pkgCluster.CreateClusterReques
 		return createEC2Request(&defaults.Distributions.EC2, defaults.DefaultNodePoolName, images), nil
 	case pkgCluster.EKS:
 		return createEKSRequest(&defaults.Distributions.EKS, defaults.DefaultNodePoolName, images), nil
+	case pkgCluster.GKE:
+		return createGKERequest(&defaults.Distributions.GKE, defaults.DefaultNodePoolName), nil
 
 	}
 
 	return nil, errors.New("not supported distribution")
+}
+
+func createGKERequest(gke *DefaultsGKE, defaultNodePoolName string, ) *pkgCluster.CreateClusterRequest {
+
+	nodepools := make(map[string]*gke2.NodePool)
+	nodepools[defaultNodePoolName] = &gke2.NodePool{
+		Autoscaling:      gke.NodePools.Autoscaling,
+		MinCount:         gke.NodePools.MinCount,
+		MaxCount:         gke.NodePools.MaxCount,
+		Count:            gke.NodePools.Count,
+		NodeInstanceType: gke.NodePools.InstanceType,
+	}
+
+	return &pkgCluster.CreateClusterRequest{
+		Location: gke.Location,
+		Cloud:    pkgCluster.Google,
+		Properties: &pkgCluster.CreateClusterProperties{
+			CreateClusterGKE: &gke2.CreateClusterGKE{
+				NodeVersion: gke.NodeVersion,
+				NodePools:   nodepools,
+				Master: &gke2.Master{
+					Version: gke.MasterVersion,
+				},
+			},
+		},
+	}
+
 }
 
 func createEKSRequest(eks *DefaultsEKS, defaultNodePoolName string, images DefaultAmazonImages) *pkgCluster.CreateClusterRequest {
