@@ -15,6 +15,7 @@ import (
 	pkgCommon "github.com/banzaicloud/pipeline/pkg/common"
 	pkgErrors "github.com/banzaicloud/pipeline/pkg/errors"
 	"github.com/banzaicloud/pipeline/pkg/providers"
+	oke2 "github.com/banzaicloud/pipeline/pkg/providers/oracle/cluster"
 	oracle "github.com/banzaicloud/pipeline/pkg/providers/oracle/model"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -76,13 +77,37 @@ func getDefaultProfile(distributionType string) (*pkgCluster.CreateClusterReques
 		return createEKSRequest(&defaults.Distributions.EKS, defaults.DefaultNodePoolName, images), nil
 	case pkgCluster.GKE:
 		return createGKERequest(&defaults.Distributions.GKE, defaults.DefaultNodePoolName), nil
+	case pkgCluster.OKE:
+		return createOKERequest(&defaults.Distributions.OKE, defaults.DefaultNodePoolName), nil
 
 	}
 
 	return nil, errors.New("not supported distribution")
 }
 
-func createGKERequest(gke *DefaultsGKE, defaultNodePoolName string, ) *pkgCluster.CreateClusterRequest {
+func createOKERequest(oke *DefaultsOKE, defaultNodePoolName string) *pkgCluster.CreateClusterRequest {
+
+	nodepools := make(map[string]*oke2.NodePool)
+	nodepools[defaultNodePoolName] = &oke2.NodePool{
+		Version: oke.NodePools.Version,
+		Count:   uint(oke.NodePools.Count),
+		Image:   oke.NodePools.Image,
+		Shape:   oke.NodePools.Shape,
+	}
+
+	return &pkgCluster.CreateClusterRequest{
+		Location: oke.Location,
+		Cloud:    pkgCluster.Oracle,
+		Properties: &pkgCluster.CreateClusterProperties{
+			CreateClusterOKE: &oke2.Cluster{
+				Version:   oke.Version,
+				NodePools: nodepools,
+			},
+		},
+	}
+}
+
+func createGKERequest(gke *DefaultsGKE, defaultNodePoolName string) *pkgCluster.CreateClusterRequest {
 
 	nodepools := make(map[string]*gke2.NodePool)
 	nodepools[defaultNodePoolName] = &gke2.NodePool{
