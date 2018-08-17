@@ -50,11 +50,11 @@ type Defaults struct {
 
 type DistributionProperties struct {
 	ACSK pkgProfileACSK.Defaults `yaml:"acsk"`
-	AKS  pkgProfileAKS.Defaults `yaml:"aks"`
-	EC2  pkgProfileEC2.Defaults `yaml:"ec2"`
-	EKS  pkgProfileEKS.Defaults `yaml:"eks"`
-	GKE  pkgProfileGKE.Defaults `yaml:"gke"`
-	OKE  pkgProfileOKE.Defaults `yaml:"oke"`
+	AKS  pkgProfileAKS.Defaults  `yaml:"aks"`
+	EC2  pkgProfileEC2.Defaults  `yaml:"ec2"`
+	EKS  pkgProfileEKS.Defaults  `yaml:"eks"`
+	GKE  pkgProfileGKE.Defaults  `yaml:"gke"`
+	OKE  pkgProfileOKE.Defaults  `yaml:"oke"`
 }
 
 func loadDefaults() (defaults *Defaults, images *AmazonImages, err error) {

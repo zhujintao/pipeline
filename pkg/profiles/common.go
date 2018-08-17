@@ -4,14 +4,14 @@ import (
 	"errors"
 
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
-		pkgProfileACSK "github.com/banzaicloud/pipeline/pkg/profiles/acsk"
+	pkgProfileACSK "github.com/banzaicloud/pipeline/pkg/profiles/acsk"
 	pkgProfileAKS "github.com/banzaicloud/pipeline/pkg/profiles/aks"
 	"github.com/banzaicloud/pipeline/pkg/profiles/defaults"
 	pkgProfileEC2 "github.com/banzaicloud/pipeline/pkg/profiles/ec2"
 	pkgProfileEKS "github.com/banzaicloud/pipeline/pkg/profiles/eks"
 	pkgProfileGKE "github.com/banzaicloud/pipeline/pkg/profiles/gke"
 	pkgProfileOKE "github.com/banzaicloud/pipeline/pkg/profiles/oke"
-	)
+)
 
 type ProfileManager interface {
 	GetDefaultProfile() *pkgCluster.CreateClusterRequest
