@@ -116,10 +116,11 @@ func main() {
 		panic(err)
 	}
 
-	err = defaults.SetDefaultValues()
-	if err != nil {
-		panic(err)
-	}
+	// todo remove
+	//err = defaults.SetDefaultValues()
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	// External DNS service
 	dnsSvc, err := dns.GetExternalDnsServiceClient()

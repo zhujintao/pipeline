@@ -18,7 +18,15 @@ func NewProfile(defaultNodePoolName string, oke *pkgDefaultsOKE.Defaults) *Profi
 	}
 }
 
-func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
+func (p *Profile) GetDefaultNodePoolName() string {
+	return p.defaultNodePoolName
+}
+
+func (p *Profile) GetLocation() string {
+	return p.Location
+}
+
+func (p *Profile) GetDefaultProfile() *pkgCluster.ClusterProfileResponse {
 
 	nodepools := make(map[string]*pkgOKE.NodePool)
 	nodepools[p.defaultNodePoolName] = &pkgOKE.NodePool{
@@ -28,11 +36,12 @@ func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
 		Shape:   p.NodePools.Shape,
 	}
 
-	return &pkgCluster.CreateClusterRequest{
+	return &pkgCluster.ClusterProfileResponse{
+		Name:     "default", // todo const
 		Location: p.Location,
 		Cloud:    pkgCluster.Oracle,
-		Properties: &pkgCluster.CreateClusterProperties{
-			CreateClusterOKE: &pkgOKE.Cluster{
+		Properties: &pkgCluster.ClusterProfileProperties{
+			OKE: &pkgOKE.Cluster{
 				Version:   p.Version,
 				NodePools: nodepools,
 			},

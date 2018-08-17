@@ -13,22 +13,16 @@ import (
 	pkgProfileOKE "github.com/banzaicloud/pipeline/pkg/profiles/oke"
 )
 
-type ProfileManager interface {
-	GetDefaultProfile() *pkgCluster.CreateClusterRequest
+type DefaultProfileManager interface {
+	GetDefaultProfile() *pkgCluster.ClusterProfileResponse
+	GetDefaultNodePoolName() string
+	GetLocation() string
 }
 
-func getProfileManager(distributionType string) (ProfileManager, error) {
+func GetDefaultProfileManager(distributionType string) (DefaultProfileManager, error) {
 
-	var manager defaults.Manager
-	def, err := manager.GetDefaults()
-	if err != nil {
-		return nil, err
-	}
-
-	images, err := manager.GetImages()
-	if err != nil {
-		return nil, err
-	}
+	manager := defaults.GetDefaultConfig()
+	def, images := manager.GetConfig()
 
 	switch distributionType {
 	case pkgCluster.ACSK:
@@ -46,14 +40,4 @@ func getProfileManager(distributionType string) (ProfileManager, error) {
 	}
 
 	return nil, errors.New("not supported distribution type")
-}
-
-func GetDefaultProfile(distributionType string) (*pkgCluster.CreateClusterRequest, error) {
-
-	manager, err := getProfileManager(distributionType)
-	if err != nil {
-		return nil, err
-	}
-
-	return manager.GetDefaultProfile(), nil
 }

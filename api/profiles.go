@@ -8,7 +8,7 @@ import (
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
 	pkgCommon "github.com/banzaicloud/pipeline/pkg/common"
 	pkgErrors "github.com/banzaicloud/pipeline/pkg/errors"
-	pkgProfiles "github.com/banzaicloud/pipeline/pkg/profiles"
+	profiles2 "github.com/banzaicloud/pipeline/pkg/profiles"
 	oracle "github.com/banzaicloud/pipeline/pkg/providers/oracle/model"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -24,31 +24,19 @@ const (
 func GetClusterProfiles(c *gin.Context) {
 
 	distributionType := c.Param(distributionTypeKey)
-	//log.Infof("Start getting saved cluster profiles [%s]", distributionType)
-	//
-	//resp, err := getProfiles(distributionType)
-	//if err != nil {
-	//	log.Errorf("Error during getting defaults to %s: %s", distributionType, err.Error())
-	//	c.JSON(http.StatusBadRequest, pkgCommon.ErrorResponse{
-	//		Code:    http.StatusBadRequest,
-	//		Message: err.Error(),
-	//		Error:   err.Error(),
-	//	})
-	//} else {
-	//	c.JSON(http.StatusOK, resp)
-	//}
+	log.Infof("Start getting saved cluster profiles [%s]", distributionType)
 
-	profile, err := pkgProfiles.GetDefaultProfile(distributionType)
+	resp, err := getProfiles(distributionType)
 	if err != nil {
+		log.Errorf("Error during getting defaults to %s: %s", distributionType, err.Error())
 		c.JSON(http.StatusBadRequest, pkgCommon.ErrorResponse{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 			Error:   err.Error(),
 		})
-		return
+	} else {
+		c.JSON(http.StatusOK, resp)
 	}
-
-	c.JSON(http.StatusOK, profile)
 
 }
 
@@ -124,6 +112,13 @@ func getProfiles(distribution string) ([]pkgCluster.ClusterProfileResponse, erro
 		r := p.GetProfile()
 		response = append(response, *r)
 	}
+
+	if defaultProfile, err := profiles2.GetDefaultProfile(distribution); err != nil {
+		return nil, err
+	} else {
+		response = append(response, *defaultProfile)
+	}
+
 	return response, nil
 
 }
@@ -131,6 +126,7 @@ func getProfiles(distribution string) ([]pkgCluster.ClusterProfileResponse, erro
 // convertRequestToProfile converts a ClusterProfileRequest into ClusterProfile
 func convertRequestToProfile(request *pkgCluster.ClusterProfileRequest) (defaults.ClusterProfile, error) {
 
+	// todo rewrite to distribution
 	switch request.Cloud {
 	case pkgCluster.Amazon:
 		if request.Properties.EC2 != nil {

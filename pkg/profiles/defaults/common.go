@@ -12,35 +12,27 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Manager struct {
+var manager DefaultConfig // todo manager??
+
+type DefaultConfig struct {
 	defaults *Defaults
 	images   *AmazonImages
 }
 
-func (m *Manager) GetImages() (*AmazonImages, error) { // todo init??
-
-	if m.images == nil || m.defaults == nil {
-		var err error
-		m.defaults, m.images, err = loadDefaults()
-		if err != nil {
-			return nil, err
-		}
+func init() {
+	var err error
+	manager.defaults, manager.images, err = loadDefaults()
+	if err != nil {
+		panic(err)
 	}
-
-	return m.images, nil
 }
 
-func (m *Manager) GetDefaults() (*Defaults, error) { // todo init??
+func GetDefaultConfig() DefaultConfig {
+	return manager
+}
 
-	if m.defaults == nil || m.images == nil {
-		var err error
-		m.defaults, m.images, err = loadDefaults()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return m.defaults, nil
+func (m *DefaultConfig) GetConfig() (*Defaults, *AmazonImages) {
+	return m.defaults, m.images
 }
 
 type Defaults struct {

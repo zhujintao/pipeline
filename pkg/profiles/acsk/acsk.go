@@ -9,36 +9,45 @@ import (
 
 type Profile struct {
 	defaultNodePoolName string
-	acsk                *pkgDefaultsACSK.Defaults
+	*pkgDefaultsACSK.Defaults
 }
 
 func NewProfile(defaultNodePoolName string, acsk *pkgDefaultsACSK.Defaults) *Profile {
 	return &Profile{
 		defaultNodePoolName: defaultNodePoolName,
-		acsk:                acsk,
+		Defaults:            acsk,
 	}
 }
 
-func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
+func (p *Profile) GetDefaultNodePoolName() string {
+	return p.defaultNodePoolName
+}
+
+func (p *Profile) GetLocation() string {
+	return p.Location
+}
+
+func (p *Profile) GetDefaultProfile() *pkgCluster.ClusterProfileResponse {
 	nodepools := make(pkgACSK.NodePools)
 	nodepools[p.defaultNodePoolName] = &pkgACSK.NodePool{
-		InstanceType:       p.acsk.NodePools.InstanceType,
-		SystemDiskCategory: p.acsk.NodePools.SystemDiskCategory,
+		InstanceType:       p.NodePools.InstanceType,
+		SystemDiskCategory: p.NodePools.SystemDiskCategory,
 		//SystemDiskSize:     acsk.NodePools.SystemDiskSize,  // todo missing
 		//LoginPassword:      acsk.NodePools.LoginPassword,  // todo missing
-		Count: int(p.acsk.NodePools.Count),
-		Image: p.acsk.NodePools.Image,
+		Count: int(p.NodePools.Count),
+		Image: p.NodePools.Image,
 	}
 
-	return &pkgCluster.CreateClusterRequest{
-		Location: p.acsk.Location,
+	return &pkgCluster.ClusterProfileResponse{
+		Name:     "default", // todo const
+		Location: p.Location,
 		Cloud:    providers.Alibaba,
-		Properties: &pkgCluster.CreateClusterProperties{
-			CreateClusterACSK: &pkgACSK.CreateClusterACSK{
-				RegionID:                 p.acsk.RegionId,
-				ZoneID:                   p.acsk.ZoneId,
-				MasterInstanceType:       p.acsk.MasterInstanceType,
-				MasterSystemDiskCategory: p.acsk.MasterSystemDiskCategory,
+		Properties: &pkgCluster.ClusterProfileProperties{
+			ACSK: &pkgACSK.ClusterProfileACSK{
+				RegionID: p.RegionId,
+				ZoneID:   p.ZoneId,
+				//MasterInstanceType:       p.acsk.MasterInstanceType, // todo missing
+				//MasterSystemDiskCategory: p.acsk.MasterSystemDiskCategory, // todo missing
 				//MasterSystemDiskSize:     acsk.MasterSystemDiskSize, // todo missing
 				//KeyPair:                  acsk.KeyPair, // todo missing
 				NodePools: nodepools,

@@ -18,7 +18,15 @@ func NewProfile(defaultNodePoolName string, gke *pkgDefaultsGKE.Defaults) *Profi
 	}
 }
 
-func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
+func (p *Profile) GetDefaultNodePoolName() string {
+	return p.defaultNodePoolName
+}
+
+func (p *Profile) GetLocation() string {
+	return p.Location
+}
+
+func (p *Profile) GetDefaultProfile() *pkgCluster.ClusterProfileResponse {
 
 	nodepools := make(map[string]*pkgGKE.NodePool)
 	nodepools[p.defaultNodePoolName] = &pkgGKE.NodePool{
@@ -29,11 +37,12 @@ func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
 		NodeInstanceType: p.NodePools.InstanceType,
 	}
 
-	return &pkgCluster.CreateClusterRequest{
+	return &pkgCluster.ClusterProfileResponse{
+		Name:     "default", // todo const
 		Location: p.Location,
 		Cloud:    pkgCluster.Google,
-		Properties: &pkgCluster.CreateClusterProperties{
-			CreateClusterGKE: &pkgGKE.CreateClusterGKE{
+		Properties: &pkgCluster.ClusterProfileProperties{
+			GKE: &pkgGKE.ClusterProfileGKE{
 				NodeVersion: p.NodeVersion,
 				NodePools:   nodepools,
 				Master: &pkgGKE.Master{

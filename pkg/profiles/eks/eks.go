@@ -21,7 +21,15 @@ func NewProfile(defaultNodePoolName string, eks *pkgDefaultsEKS.Defaults, image 
 	}
 }
 
-func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
+func (p *Profile) GetDefaultNodePoolName() string {
+	return p.defaultNodePoolName
+}
+
+func (p *Profile) GetLocation() string {
+	return p.Location
+}
+
+func (p *Profile) GetDefaultProfile() *pkgCluster.ClusterProfileResponse {
 
 	nodepools := make(map[string]*pkgEC2.NodePool)
 	nodepools[p.defaultNodePoolName] = &pkgEC2.NodePool{
@@ -34,11 +42,12 @@ func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
 		Image:        p.image,
 	}
 
-	return &pkgCluster.CreateClusterRequest{
+	return &pkgCluster.ClusterProfileResponse{
+		Name:     "default", // todo const
 		Location: p.Location,
 		Cloud:    pkgCluster.Amazon,
-		Properties: &pkgCluster.CreateClusterProperties{
-			CreateClusterEKS: &pkgEKS.CreateClusterEKS{
+		Properties: &pkgCluster.ClusterProfileProperties{
+			EKS: &pkgEKS.ClusterProfileEKS{
 				Version:   p.Version,
 				NodePools: nodepools,
 			},

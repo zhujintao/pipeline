@@ -18,7 +18,15 @@ func NewProfile(defaultNodePoolName string, aks *pkgDefaultsAKS.Defaults) *Profi
 	}
 }
 
-func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
+func (p *Profile) GetDefaultNodePoolName() string {
+	return p.defaultNodePoolName
+}
+
+func (p *Profile) GetLocation() string {
+	return p.Location
+}
+
+func (p *Profile) GetDefaultProfile() *pkgCluster.ClusterProfileResponse {
 
 	nodepool := make(map[string]*pkgAKS.NodePoolCreate)
 	nodepool[p.defaultNodePoolName] = &pkgAKS.NodePoolCreate{
@@ -29,11 +37,12 @@ func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
 		NodeInstanceType: p.NodePools.InstanceType,
 	}
 
-	return &pkgCluster.CreateClusterRequest{
+	return &pkgCluster.ClusterProfileResponse{
+		Name:     "default", // todo const
 		Location: p.Location,
 		Cloud:    pkgCluster.Azure,
-		Properties: &pkgCluster.CreateClusterProperties{
-			CreateClusterAKS: &pkgAKS.CreateClusterAKS{
+		Properties: &pkgCluster.ClusterProfileProperties{
+			AKS: &pkgAKS.ClusterProfileAKS{
 				KubernetesVersion: p.Version,
 				NodePools:         nodepool,
 			},
