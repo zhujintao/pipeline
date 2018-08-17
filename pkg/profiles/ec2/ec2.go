@@ -7,14 +7,14 @@ import (
 
 type Profile struct {
 	defaultNodePoolName string
-	ec2                 *Defaults
-	image               string
+	*Defaults
+	image string
 }
 
 func NewProfile(defaultNodePoolName string, ec2 *Defaults, image string) *Profile {
 	return &Profile{
 		defaultNodePoolName: defaultNodePoolName,
-		ec2:                 ec2,
+		Defaults:            ec2,
 		image:               image,
 	}
 }
@@ -38,23 +38,23 @@ func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
 
 	nodepools := make(map[string]*pkgClusterEC2.NodePool)
 	nodepools[p.defaultNodePoolName] = &pkgClusterEC2.NodePool{
-		InstanceType: p.ec2.NodePools.InstanceType,
-		SpotPrice:    p.ec2.NodePools.SpotPrice,
-		Autoscaling:  p.ec2.NodePools.Autoscaling,
-		MinCount:     p.ec2.NodePools.MinCount,
-		MaxCount:     p.ec2.NodePools.MaxCount,
-		Count:        p.ec2.NodePools.Count,
+		InstanceType: p.NodePools.InstanceType,
+		SpotPrice:    p.NodePools.SpotPrice,
+		Autoscaling:  p.NodePools.Autoscaling,
+		MinCount:     p.NodePools.MinCount,
+		MaxCount:     p.NodePools.MaxCount,
+		Count:        p.NodePools.Count,
 		Image:        p.image,
 	}
 
 	return &pkgCluster.CreateClusterRequest{
-		Location: p.ec2.Location,
+		Location: p.Location,
 		Cloud:    pkgCluster.Amazon,
 		Properties: &pkgCluster.CreateClusterProperties{
 			CreateClusterEC2: &pkgClusterEC2.CreateClusterEC2{
 				NodePools: nodepools,
 				Master: &pkgClusterEC2.CreateAmazonMaster{
-					InstanceType: p.ec2.MasterInstanceType,
+					InstanceType: p.MasterInstanceType,
 					Image:        p.image,
 				},
 			},

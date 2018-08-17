@@ -7,13 +7,13 @@ import (
 
 type Profile struct {
 	defaultNodePoolName string
-	aks                 *Defaults
+	*Defaults
 }
 
 func NewProfile(defaultNodePoolName string, aks *Defaults) *Profile {
 	return &Profile{
 		defaultNodePoolName: defaultNodePoolName,
-		aks:                 aks,
+		Defaults:            aks,
 	}
 }
 
@@ -35,19 +35,19 @@ func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
 
 	nodepool := make(map[string]*pkgAKS.NodePoolCreate)
 	nodepool[p.defaultNodePoolName] = &pkgAKS.NodePoolCreate{
-		Autoscaling:      p.aks.NodePools.Autoscaling,
-		MinCount:         p.aks.NodePools.MinCount,
-		MaxCount:         p.aks.NodePools.MaxCount,
-		Count:            p.aks.NodePools.Count,
-		NodeInstanceType: p.aks.NodePools.InstanceType,
+		Autoscaling:      p.NodePools.Autoscaling,
+		MinCount:         p.NodePools.MinCount,
+		MaxCount:         p.NodePools.MaxCount,
+		Count:            p.NodePools.Count,
+		NodeInstanceType: p.NodePools.InstanceType,
 	}
 
 	return &pkgCluster.CreateClusterRequest{
-		Location: p.aks.Location,
+		Location: p.Location,
 		Cloud:    pkgCluster.Azure,
 		Properties: &pkgCluster.CreateClusterProperties{
 			CreateClusterAKS: &pkgAKS.CreateClusterAKS{
-				KubernetesVersion: p.aks.Version, // todo simplify p.aks and so on other ones
+				KubernetesVersion: p.Version,
 				NodePools:         nodepool,
 			},
 		},

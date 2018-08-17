@@ -7,13 +7,13 @@ import (
 
 type Profile struct {
 	defaultNodePoolName string
-	oke                 *Defaults // todo all the same???
+	*Defaults // todo all the same???
 }
 
 func NewProfile(defaultNodePoolName string, oke *Defaults) *Profile {
 	return &Profile{
 		defaultNodePoolName: defaultNodePoolName,
-		oke:                 oke,
+		Defaults:            oke,
 	}
 }
 
@@ -36,18 +36,18 @@ func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
 
 	nodepools := make(map[string]*pkgOKE.NodePool)
 	nodepools[p.defaultNodePoolName] = &pkgOKE.NodePool{
-		Version: p.oke.NodePools.Version,
-		Count:   uint(p.oke.NodePools.Count),
-		Image:   p.oke.NodePools.Image,
-		Shape:   p.oke.NodePools.Shape,
+		Version: p.NodePools.Version,
+		Count:   uint(p.NodePools.Count),
+		Image:   p.NodePools.Image,
+		Shape:   p.NodePools.Shape,
 	}
 
 	return &pkgCluster.CreateClusterRequest{
-		Location: p.oke.Location,
+		Location: p.Location,
 		Cloud:    pkgCluster.Oracle,
 		Properties: &pkgCluster.CreateClusterProperties{
 			CreateClusterOKE: &pkgOKE.Cluster{
-				Version:   p.oke.Version,
+				Version:   p.Version,
 				NodePools: nodepools,
 			},
 		},

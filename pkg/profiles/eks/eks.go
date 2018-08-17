@@ -9,8 +9,8 @@ import (
 
 type Profile struct {
 	defaultNodePoolName string
-	eks                 *Defaults
-	image               string
+	*Defaults
+	image string
 }
 
 type Defaults struct {
@@ -22,7 +22,7 @@ type Defaults struct {
 func NewProfile(defaultNodePoolName string, eks *Defaults, image string) *Profile {
 	return &Profile{
 		defaultNodePoolName: defaultNodePoolName,
-		eks:                 eks,
+		Defaults:            eks,
 		image:               image,
 	}
 }
@@ -31,21 +31,21 @@ func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
 
 	nodepools := make(map[string]*pkgEC2.NodePool)
 	nodepools[p.defaultNodePoolName] = &pkgEC2.NodePool{
-		InstanceType: p.eks.NodePools.InstanceType,
-		SpotPrice:    p.eks.NodePools.SpotPrice,
-		Autoscaling:  p.eks.NodePools.Autoscaling,
-		MinCount:     p.eks.NodePools.MinCount,
-		MaxCount:     p.eks.NodePools.MaxCount,
-		Count:        p.eks.NodePools.Count,
+		InstanceType: p.NodePools.InstanceType,
+		SpotPrice:    p.NodePools.SpotPrice,
+		Autoscaling:  p.NodePools.Autoscaling,
+		MinCount:     p.NodePools.MinCount,
+		MaxCount:     p.NodePools.MaxCount,
+		Count:        p.NodePools.Count,
 		Image:        p.image,
 	}
 
 	return &pkgCluster.CreateClusterRequest{
-		Location: p.eks.Location,
+		Location: p.Location,
 		Cloud:    pkgCluster.Amazon,
 		Properties: &pkgCluster.CreateClusterProperties{
 			CreateClusterEKS: &pkgEKS.CreateClusterEKS{
-				Version:   p.eks.Version,
+				Version:   p.Version,
 				NodePools: nodepools,
 			},
 		},

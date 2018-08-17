@@ -7,13 +7,13 @@ import (
 
 type Profile struct {
 	defaultNodePoolName string
-	gke                 *Defaults
+	*Defaults
 }
 
 func NewProfile(defaultNodePoolName string, gke *Defaults) *Profile {
 	return &Profile{
 		defaultNodePoolName: defaultNodePoolName,
-		gke:                 gke,
+		Defaults:            gke,
 	}
 }
 
@@ -36,22 +36,22 @@ func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {
 
 	nodepools := make(map[string]*pkgGKE.NodePool)
 	nodepools[p.defaultNodePoolName] = &pkgGKE.NodePool{
-		Autoscaling:      p.gke.NodePools.Autoscaling,
-		MinCount:         p.gke.NodePools.MinCount,
-		MaxCount:         p.gke.NodePools.MaxCount,
-		Count:            p.gke.NodePools.Count,
-		NodeInstanceType: p.gke.NodePools.InstanceType,
+		Autoscaling:      p.NodePools.Autoscaling,
+		MinCount:         p.NodePools.MinCount,
+		MaxCount:         p.NodePools.MaxCount,
+		Count:            p.NodePools.Count,
+		NodeInstanceType: p.NodePools.InstanceType,
 	}
 
 	return &pkgCluster.CreateClusterRequest{
-		Location: p.gke.Location,
+		Location: p.Location,
 		Cloud:    pkgCluster.Google,
 		Properties: &pkgCluster.CreateClusterProperties{
 			CreateClusterGKE: &pkgGKE.CreateClusterGKE{
-				NodeVersion: p.gke.NodeVersion,
+				NodeVersion: p.NodeVersion,
 				NodePools:   nodepools,
 				Master: &pkgGKE.Master{
-					Version: p.gke.MasterVersion,
+					Version: p.MasterVersion,
 				},
 			},
 		},
