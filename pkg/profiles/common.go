@@ -4,15 +4,14 @@ import (
 	"errors"
 
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
-	acsk2 "github.com/banzaicloud/pipeline/pkg/cluster/acsk"
+		pkgProfileACSK "github.com/banzaicloud/pipeline/pkg/profiles/acsk"
 	pkgProfileAKS "github.com/banzaicloud/pipeline/pkg/profiles/aks"
 	"github.com/banzaicloud/pipeline/pkg/profiles/defaults"
 	pkgProfileEC2 "github.com/banzaicloud/pipeline/pkg/profiles/ec2"
 	pkgProfileEKS "github.com/banzaicloud/pipeline/pkg/profiles/eks"
 	pkgProfileGKE "github.com/banzaicloud/pipeline/pkg/profiles/gke"
 	pkgProfileOKE "github.com/banzaicloud/pipeline/pkg/profiles/oke"
-	"github.com/banzaicloud/pipeline/pkg/providers"
-)
+	)
 
 type ProfileManager interface {
 	GetDefaultProfile() *pkgCluster.CreateClusterRequest
@@ -32,6 +31,8 @@ func getProfileManager(distributionType string) (ProfileManager, error) {
 	}
 
 	switch distributionType {
+	case pkgCluster.ACSK:
+		return pkgProfileACSK.NewProfile(def.DefaultNodePoolName, &def.Distributions.ACSK), nil
 	case pkgCluster.AKS:
 		return pkgProfileAKS.NewProfile(def.DefaultNodePoolName, &def.Distributions.AKS), nil
 	case pkgCluster.EC2:
@@ -55,74 +56,4 @@ func GetDefaultProfile(distributionType string) (*pkgCluster.CreateClusterReques
 	}
 
 	return manager.GetDefaultProfile(), nil
-
-	//defaults, images, err := readFiles()
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//switch distributionType {
-	//case pkgCluster.ACSK:
-	//	return createACSKRequest(&defaults.Distributions.ACSK, defaults.DefaultNodePoolName), nil
-	//case pkgCluster.AKS:
-	//	return createAKSRequest(&defaults.Distributions.AKS, defaults.DefaultNodePoolName), nil
-	//case pkgCluster.EC2:
-	//	return createEC2Request(&defaults.Distributions.EC2, defaults.DefaultNodePoolName, images), nil
-	//case pkgCluster.EKS:
-	//	return createEKSRequest(&defaults.Distributions.EKS, defaults.DefaultNodePoolName, images), nil
-	//	case pkgCluster.GKE:
-	//		return createGKERequest(&defaults.Distributions.GKE, defaults.DefaultNodePoolName), nil
-	//case pkgCluster.OKE:
-	//	return createOKERequest(&defaults.Distributions.OKE, defaults.DefaultNodePoolName), nil
-	//
-	//}
-	//
-	//return nil, errors.New("not supported distribution")
-}
-
-func createACSKRequest(acsk *DefaultsACSK, defaultNodePoolName string) *pkgCluster.CreateClusterRequest {
-	nodepools := make(acsk2.NodePools)
-	nodepools[defaultNodePoolName] = &acsk2.NodePool{
-		InstanceType:       acsk.NodePools.InstanceType,
-		SystemDiskCategory: acsk.NodePools.SystemDiskCategory,
-		//SystemDiskSize:     acsk.NodePools.SystemDiskSize,  // todo missing
-		//LoginPassword:      acsk.NodePools.LoginPassword,  // todo missing
-		Count: int(acsk.NodePools.Count),
-		Image: acsk.NodePools.Image,
-	}
-
-	return &pkgCluster.CreateClusterRequest{
-		Location: acsk.Location,
-		Cloud:    providers.Alibaba,
-		Properties: &pkgCluster.CreateClusterProperties{
-			CreateClusterACSK: &acsk2.CreateClusterACSK{
-				RegionID:                 acsk.RegionId,
-				ZoneID:                   acsk.ZoneId,
-				MasterInstanceType:       acsk.MasterInstanceType,
-				MasterSystemDiskCategory: acsk.MasterSystemDiskCategory,
-				//MasterSystemDiskSize:     acsk.MasterSystemDiskSize, // todo missing
-				//KeyPair:                  acsk.KeyPair, // todo missing
-				NodePools: nodepools,
-			},
-		},
-	}
-}
-
-type DefaultsACSK struct {
-	Location                 string                `yaml:"location"`
-	RegionId                 string                `yaml:"regionId"`
-	ZoneId                   string                `yaml:"zoneId"`
-	MasterInstanceType       string                `yaml:"masterInstanceType"`
-	MasterSystemDiskCategory string                `yaml:"masterSystemDiskCategory"`
-	NodePools                DefaultsACSKNodePools `yaml:"nodePools"`
-}
-
-type DefaultsACSKNodePools struct {
-	Autoscaling        bool   `yaml:"autoscaling"`
-	Count              int    `yaml:"count"`
-	MinCount           int    `yaml:"minCount"`
-	MaxCount           int    `yaml:"maxCount"`
-	Image              string `yaml:"image"`
-	InstanceType       string `yaml:"instanceType"`
-	SystemDiskCategory string `yaml:"systemDiskCategory"`
 }

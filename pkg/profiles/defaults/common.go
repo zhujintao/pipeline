@@ -3,6 +3,7 @@ package defaults
 import (
 	"io/ioutil"
 
+	pkgProfileACSK "github.com/banzaicloud/pipeline/pkg/profiles/acsk"
 	pkgProfileAKS "github.com/banzaicloud/pipeline/pkg/profiles/aks"
 	pkgProfileEC2 "github.com/banzaicloud/pipeline/pkg/profiles/ec2"
 	pkgProfileEKS "github.com/banzaicloud/pipeline/pkg/profiles/eks"
@@ -48,12 +49,12 @@ type Defaults struct {
 }
 
 type DistributionProperties struct {
-	//ACSK DefaultsACSK           `yaml:"acsk"`
-	AKS pkgProfileAKS.Defaults `yaml:"aks"`
-	EC2 pkgProfileEC2.Defaults `yaml:"ec2"`
-	EKS pkgProfileEKS.Defaults `yaml:"eks"` // todo put back
-	GKE pkgProfileGKE.Defaults `yaml:"gke"`
-	OKE pkgProfileOKE.Defaults `yaml:"oke"`
+	ACSK pkgProfileACSK.Defaults `yaml:"acsk"`
+	AKS  pkgProfileAKS.Defaults `yaml:"aks"`
+	EC2  pkgProfileEC2.Defaults `yaml:"ec2"`
+	EKS  pkgProfileEKS.Defaults `yaml:"eks"`
+	GKE  pkgProfileGKE.Defaults `yaml:"gke"`
+	OKE  pkgProfileOKE.Defaults `yaml:"oke"`
 }
 
 func loadDefaults() (defaults *Defaults, images *AmazonImages, err error) {
