@@ -4,22 +4,16 @@ import (
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
 	pkgEC2 "github.com/banzaicloud/pipeline/pkg/cluster/ec2"
 	pkgEKS "github.com/banzaicloud/pipeline/pkg/cluster/eks"
-	pkgEC2Profile "github.com/banzaicloud/pipeline/pkg/profiles/ec2"
+	pkgDefaultsEKS "github.com/banzaicloud/pipeline/pkg/profiles/defaults/eks"
 )
 
 type Profile struct {
 	defaultNodePoolName string
-	*Defaults
+	*pkgDefaultsEKS.Defaults
 	image string
 }
 
-type Defaults struct {
-	Location  string                  `yaml:"location"`
-	Version   string                  `yaml:"version"`
-	NodePools pkgEC2Profile.NodePools `yaml:"nodePools"`
-}
-
-func NewProfile(defaultNodePoolName string, eks *Defaults, image string) *Profile {
+func NewProfile(defaultNodePoolName string, eks *pkgDefaultsEKS.Defaults, image string) *Profile {
 	return &Profile{
 		defaultNodePoolName: defaultNodePoolName,
 		Defaults:            eks,

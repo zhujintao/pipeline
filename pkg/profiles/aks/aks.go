@@ -3,32 +3,19 @@ package aks
 import (
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
 	pkgAKS "github.com/banzaicloud/pipeline/pkg/cluster/aks"
+	pkgDefaultsAKS "github.com/banzaicloud/pipeline/pkg/profiles/defaults/aks"
 )
 
 type Profile struct {
 	defaultNodePoolName string
-	*Defaults
+	*pkgDefaultsAKS.Defaults
 }
 
-func NewProfile(defaultNodePoolName string, aks *Defaults) *Profile {
+func NewProfile(defaultNodePoolName string, aks *pkgDefaultsAKS.Defaults) *Profile {
 	return &Profile{
 		defaultNodePoolName: defaultNodePoolName,
 		Defaults:            aks,
 	}
-}
-
-type Defaults struct {
-	Location  string    `yaml:"location"`
-	Version   string    `yaml:"version"`
-	NodePools NodePools `yaml:"nodePools"`
-}
-
-type NodePools struct {
-	Autoscaling  bool   `yaml:"autoscaling"`
-	Count        int    `yaml:"count"`
-	MinCount     int    `yaml:"minCount"`
-	MaxCount     int    `yaml:"maxCount"`
-	InstanceType string `yaml:"instanceType"`
 }
 
 func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {

@@ -3,33 +3,19 @@ package gke
 import (
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
 	pkgGKE "github.com/banzaicloud/pipeline/pkg/cluster/gke"
+	pkgDefaultsGKE "github.com/banzaicloud/pipeline/pkg/profiles/defaults/gke"
 )
 
 type Profile struct {
 	defaultNodePoolName string
-	*Defaults
+	*pkgDefaultsGKE.Defaults
 }
 
-func NewProfile(defaultNodePoolName string, gke *Defaults) *Profile {
+func NewProfile(defaultNodePoolName string, gke *pkgDefaultsGKE.Defaults) *Profile {
 	return &Profile{
 		defaultNodePoolName: defaultNodePoolName,
 		Defaults:            gke,
 	}
-}
-
-type Defaults struct {
-	Location      string               `yaml:"location"`
-	MasterVersion string               `yaml:"masterVersion"`
-	NodeVersion   string               `yaml:"nodeVersion"`
-	NodePools     DefaultsGKENodePools `yaml:"nodePools"`
-}
-
-type DefaultsGKENodePools struct {
-	Autoscaling  bool   `yaml:"autoscaling"`
-	Count        int    `yaml:"count"`
-	MinCount     int    `yaml:"minCount"`
-	MaxCount     int    `yaml:"maxCount"`
-	InstanceType string `yaml:"instanceType"`
 }
 
 func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {

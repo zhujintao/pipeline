@@ -3,38 +3,20 @@ package acsk
 import (
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
 	pkgACSK "github.com/banzaicloud/pipeline/pkg/cluster/acsk"
+	pkgDefaultsACSK "github.com/banzaicloud/pipeline/pkg/profiles/defaults/acsk"
 	"github.com/banzaicloud/pipeline/pkg/providers"
 )
 
 type Profile struct {
 	defaultNodePoolName string
-	acsk                *Defaults
+	acsk                *pkgDefaultsACSK.Defaults
 }
 
-func NewProfile(defaultNodePoolName string, acsk *Defaults) *Profile {
+func NewProfile(defaultNodePoolName string, acsk *pkgDefaultsACSK.Defaults) *Profile {
 	return &Profile{
 		defaultNodePoolName: defaultNodePoolName,
 		acsk:                acsk,
 	}
-}
-
-type Defaults struct {
-	Location                 string    `yaml:"location"`
-	RegionId                 string    `yaml:"regionId"`
-	ZoneId                   string    `yaml:"zoneId"`
-	MasterInstanceType       string    `yaml:"masterInstanceType"`
-	MasterSystemDiskCategory string    `yaml:"masterSystemDiskCategory"`
-	NodePools                NodePools `yaml:"nodePools"`
-}
-
-type NodePools struct {
-	Autoscaling        bool   `yaml:"autoscaling"`
-	Count              int    `yaml:"count"`
-	MinCount           int    `yaml:"minCount"`
-	MaxCount           int    `yaml:"maxCount"`
-	Image              string `yaml:"image"`
-	InstanceType       string `yaml:"instanceType"`
-	SystemDiskCategory string `yaml:"systemDiskCategory"`
 }
 
 func (p *Profile) GetDefaultProfile() *pkgCluster.CreateClusterRequest {

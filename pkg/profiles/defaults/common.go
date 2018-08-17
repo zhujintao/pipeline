@@ -3,12 +3,12 @@ package defaults
 import (
 	"io/ioutil"
 
-	pkgProfileACSK "github.com/banzaicloud/pipeline/pkg/profiles/acsk"
-	pkgProfileAKS "github.com/banzaicloud/pipeline/pkg/profiles/aks"
-	pkgProfileEC2 "github.com/banzaicloud/pipeline/pkg/profiles/ec2"
-	pkgProfileEKS "github.com/banzaicloud/pipeline/pkg/profiles/eks"
-	pkgProfileGKE "github.com/banzaicloud/pipeline/pkg/profiles/gke"
-	pkgProfileOKE "github.com/banzaicloud/pipeline/pkg/profiles/oke"
+	pkgDefaultsACSK "github.com/banzaicloud/pipeline/pkg/profiles/defaults/acsk"
+	pkgDefaultsAKS "github.com/banzaicloud/pipeline/pkg/profiles/defaults/aks"
+	pkgDefaultsEC2 "github.com/banzaicloud/pipeline/pkg/profiles/defaults/ec2"
+	pkgDefaultsEKS "github.com/banzaicloud/pipeline/pkg/profiles/defaults/eks"
+	pkgDefaultsGKE "github.com/banzaicloud/pipeline/pkg/profiles/defaults/gke"
+	pkgDefaultsOKE "github.com/banzaicloud/pipeline/pkg/profiles/defaults/oke"
 	"gopkg.in/yaml.v2"
 )
 
@@ -49,12 +49,12 @@ type Defaults struct {
 }
 
 type DistributionProperties struct {
-	ACSK pkgProfileACSK.Defaults `yaml:"acsk"`
-	AKS  pkgProfileAKS.Defaults  `yaml:"aks"`
-	EC2  pkgProfileEC2.Defaults  `yaml:"ec2"`
-	EKS  pkgProfileEKS.Defaults  `yaml:"eks"`
-	GKE  pkgProfileGKE.Defaults  `yaml:"gke"`
-	OKE  pkgProfileOKE.Defaults  `yaml:"oke"`
+	ACSK pkgDefaultsACSK.Defaults `yaml:"acsk"`
+	AKS  pkgDefaultsAKS.Defaults  `yaml:"aks"`
+	EC2  pkgDefaultsEC2.Defaults  `yaml:"ec2"`
+	EKS  pkgDefaultsEKS.Defaults  `yaml:"eks"`
+	GKE  pkgDefaultsGKE.Defaults  `yaml:"gke"`
+	OKE  pkgDefaultsOKE.Defaults  `yaml:"oke"`
 }
 
 func loadDefaults() (defaults *Defaults, images *AmazonImages, err error) {
