@@ -2,17 +2,15 @@ package profiles
 
 import (
 	"errors"
-	"io/ioutil"
 
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
 	acsk2 "github.com/banzaicloud/pipeline/pkg/cluster/acsk"
 	aks2 "github.com/banzaicloud/pipeline/pkg/cluster/aks"
-	ec22 "github.com/banzaicloud/pipeline/pkg/cluster/ec2"
-	eks2 "github.com/banzaicloud/pipeline/pkg/cluster/eks"
+	"github.com/banzaicloud/pipeline/pkg/profiles/defaults"
+	pkgProfileEC2 "github.com/banzaicloud/pipeline/pkg/profiles/ec2"
 	pkgProfileGKE "github.com/banzaicloud/pipeline/pkg/profiles/gke"
 	"github.com/banzaicloud/pipeline/pkg/providers"
 	oke2 "github.com/banzaicloud/pipeline/pkg/providers/oracle/cluster"
-	"gopkg.in/yaml.v2"
 )
 
 type ProfileManager interface {
@@ -20,14 +18,23 @@ type ProfileManager interface {
 }
 
 func getProfileManager(distributionType string) (ProfileManager, error) {
-	defaults, _, err := readFiles()
+
+	var manager defaults.Manager
+	def, err := manager.GetDefaults()
+	if err != nil {
+		return nil, err
+	}
+
+	images, err := manager.GetImages()
 	if err != nil {
 		return nil, err
 	}
 
 	switch distributionType {
+	case pkgCluster.EC2:
+		return pkgProfileEC2.NewProfile(def.DefaultNodePoolName, &def.Distributions.EC2, images.EC2.GetDefaultAmazonImage(def.Distributions.EC2.Location)), nil // todo refactor!!
 	case pkgCluster.GKE:
-		return pkgProfileGKE.NewProfile(defaults.DefaultNodePoolName, &defaults.Distributions.GKE), nil
+		return pkgProfileGKE.NewProfile(def.DefaultNodePoolName, &def.Distributions.GKE), nil
 	}
 
 	return nil, errors.New("not supported distribution type")
@@ -88,67 +95,37 @@ func createOKERequest(oke *DefaultsOKE, defaultNodePoolName string) *pkgCluster.
 	}
 }
 
-func createEKSRequest(eks *DefaultsEKS, defaultNodePoolName string, images DefaultAmazonImages) *pkgCluster.CreateClusterRequest {
-
-	image := getAmazonImage(images.EKS, eks.Location)
-
-	nodepools := make(map[string]*ec22.NodePool)
-	nodepools[defaultNodePoolName] = &ec22.NodePool{
-		InstanceType: eks.NodePools.InstanceType,
-		SpotPrice:    eks.NodePools.SpotPrice,
-		Autoscaling:  eks.NodePools.Autoscaling,
-		MinCount:     eks.NodePools.MinCount,
-		MaxCount:     eks.NodePools.MaxCount,
-		Count:        eks.NodePools.Count,
-		Image:        image,
-	}
-
-	return &pkgCluster.CreateClusterRequest{
-		Location: eks.Location,
-		Cloud:    pkgCluster.Amazon,
-		Properties: &pkgCluster.CreateClusterProperties{
-			CreateClusterEKS: &eks2.CreateClusterEKS{
-				Version:   eks.Version,
-				NodePools: nodepools,
-			},
-		},
-	}
-
-}
-
-func createEC2Request(ec2 *DefaultsEC2, defaultNodePoolName string, images DefaultAmazonImages) *pkgCluster.CreateClusterRequest {
-
-	image := getAmazonImage(images.EC2, ec2.Location)
-
-	nodepools := make(map[string]*ec22.NodePool)
-	nodepools[defaultNodePoolName] = &ec22.NodePool{
-		InstanceType: ec2.NodePools.InstanceType,
-		SpotPrice:    ec2.NodePools.SpotPrice,
-		Autoscaling:  ec2.NodePools.Autoscaling,
-		MinCount:     ec2.NodePools.MinCount,
-		MaxCount:     ec2.NodePools.MaxCount,
-		Count:        ec2.NodePools.Count,
-		Image:        image,
-	}
-
-	return &pkgCluster.CreateClusterRequest{
-		Location: ec2.Location,
-		Cloud:    pkgCluster.Amazon,
-		Properties: &pkgCluster.CreateClusterProperties{
-			CreateClusterEC2: &ec22.CreateClusterEC2{
-				NodePools: nodepools,
-				Master: &ec22.CreateAmazonMaster{
-					InstanceType: ec2.MasterInstanceType,
-					Image:        image,
-				},
-			},
-		},
-	}
-}
-
-func getAmazonImage(images AmazonImages, location string) string {
-	return images[location]
-}
+//func createEKSRequest(eks *DefaultsEKS, defaultNodePoolName string, images DefaultAmazonImages) *pkgCluster.CreateClusterRequest {
+//
+//	image := GetAmazonImage(images.EKS, eks.Location)
+//
+//	nodepools := make(map[string]*ec22.NodePool)
+//	nodepools[defaultNodePoolName] = &ec22.NodePool{
+//		InstanceType: eks.NodePools.InstanceType,
+//		SpotPrice:    eks.NodePools.SpotPrice,
+//		Autoscaling:  eks.NodePools.Autoscaling,
+//		MinCount:     eks.NodePools.MinCount,
+//		MaxCount:     eks.NodePools.MaxCount,
+//		Count:        eks.NodePools.Count,
+//		Image:        image,
+//	}
+//
+//	return &pkgCluster.CreateClusterRequest{
+//		Location: eks.Location,
+//		Cloud:    pkgCluster.Amazon,
+//		Properties: &pkgCluster.CreateClusterProperties{
+//			CreateClusterEKS: &eks2.CreateClusterEKS{
+//				Version:   eks.Version,
+//				NodePools: nodepools,
+//			},
+//		},
+//	}
+//
+//}
+//
+//func GetAmazonImage(images AmazonImages, location string) string {
+//	return images[location]
+//}
 
 func createAKSRequest(aks *DefaultsAKS, defaultNodePoolName string) *pkgCluster.CreateClusterRequest {
 
@@ -201,52 +178,6 @@ func createACSKRequest(acsk *DefaultsACSK, defaultNodePoolName string) *pkgClust
 	}
 }
 
-func readFiles() (defaults Defaults, images DefaultAmazonImages, err error) {
-
-	if err = readYaml("defaults/defaults.yaml", &defaults); err != nil {
-		return
-	}
-
-	err = readYaml("defaults/defaults-amazon-images.yaml", &images)
-
-	return
-}
-
-func readYaml(filePath string, out interface{}) error {
-	f, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-
-	err = yaml.Unmarshal(f, out)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-type DefaultAmazonImages struct {
-	EC2 AmazonImages `yaml:"ec2"`
-	EKS AmazonImages `yaml:"eks"`
-}
-
-type AmazonImages map[string]string
-
-type Defaults struct {
-	DefaultNodePoolName string               `yaml:"defaultNodePoolName"`
-	Distributions       DefaultsDistribution `yaml:"distributions"`
-}
-
-type DefaultsDistribution struct {
-	ACSK DefaultsACSK           `yaml:"acsk"`
-	AKS  DefaultsAKS            `yaml:"aks"`
-	EC2  DefaultsEC2            `yaml:"ec2"`
-	EKS  DefaultsEKS            `yaml:"eks"`
-	GKE  pkgProfileGKE.Defaults `yaml:"gke"`
-	OKE  DefaultsOKE            `yaml:"oke"`
-}
-
 type DefaultsACSK struct {
 	Location                 string                `yaml:"location"`
 	RegionId                 string                `yaml:"regionId"`
@@ -262,16 +193,10 @@ type DefaultsAKS struct {
 	NodePools DefaultsAKSNodePools `yaml:"nodePools"`
 }
 
-type DefaultsEC2 struct {
-	Location           string                  `yaml:"location"`
-	MasterInstanceType string                  `yaml:"masterInstanceType"`
-	NodePools          DefaultsAmazonNodePools `yaml:"nodePools"`
-}
-
 type DefaultsEKS struct {
-	Location  string                  `yaml:"location"`
-	Version   string                  `yaml:"version"`
-	NodePools DefaultsAmazonNodePools `yaml:"nodePools"`
+	Location string `yaml:"location"`
+	Version  string `yaml:"version"`
+	//NodePools DefaultsAmazonNodePools `yaml:"nodePools"` // todo put back
 }
 
 type DefaultsOKE struct {
@@ -296,15 +221,6 @@ type DefaultsAKSNodePools struct {
 	MinCount     int    `yaml:"minCount"`
 	MaxCount     int    `yaml:"maxCount"`
 	InstanceType string `yaml:"instanceType"`
-}
-
-type DefaultsAmazonNodePools struct {
-	InstanceType string `yaml:"instanceType"`
-	SpotPrice    string `yaml:"spotPrice"`
-	Autoscaling  bool   `yaml:"autoscaling"`
-	Count        int    `yaml:"count"`
-	MinCount     int    `yaml:"minCount"`
-	MaxCount     int    `yaml:"maxCount"`
 }
 
 type DefaultsOKENodePools struct {
