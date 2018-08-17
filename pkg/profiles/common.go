@@ -10,8 +10,8 @@ import (
 	pkgProfileEC2 "github.com/banzaicloud/pipeline/pkg/profiles/ec2"
 	pkgProfileEKS "github.com/banzaicloud/pipeline/pkg/profiles/eks"
 	pkgProfileGKE "github.com/banzaicloud/pipeline/pkg/profiles/gke"
+	pkgProfileOKE "github.com/banzaicloud/pipeline/pkg/profiles/oke"
 	"github.com/banzaicloud/pipeline/pkg/providers"
-	oke2 "github.com/banzaicloud/pipeline/pkg/providers/oracle/cluster"
 )
 
 type ProfileManager interface {
@@ -40,6 +40,8 @@ func getProfileManager(distributionType string) (ProfileManager, error) {
 		return pkgProfileEKS.NewProfile(def.DefaultNodePoolName, &def.Distributions.EKS, images.EKS.GetDefaultAmazonImage(def.Distributions.EKS.Location)), nil // todo refactor!!
 	case pkgCluster.GKE:
 		return pkgProfileGKE.NewProfile(def.DefaultNodePoolName, &def.Distributions.GKE), nil
+	case pkgCluster.OKE:
+		return pkgProfileOKE.NewProfile(def.DefaultNodePoolName, &def.Distributions.OKE), nil
 	}
 
 	return nil, errors.New("not supported distribution type")
@@ -76,28 +78,6 @@ func GetDefaultProfile(distributionType string) (*pkgCluster.CreateClusterReques
 	//}
 	//
 	//return nil, errors.New("not supported distribution")
-}
-
-func createOKERequest(oke *DefaultsOKE, defaultNodePoolName string) *pkgCluster.CreateClusterRequest {
-
-	nodepools := make(map[string]*oke2.NodePool)
-	nodepools[defaultNodePoolName] = &oke2.NodePool{
-		Version: oke.NodePools.Version,
-		Count:   uint(oke.NodePools.Count),
-		Image:   oke.NodePools.Image,
-		Shape:   oke.NodePools.Shape,
-	}
-
-	return &pkgCluster.CreateClusterRequest{
-		Location: oke.Location,
-		Cloud:    pkgCluster.Oracle,
-		Properties: &pkgCluster.CreateClusterProperties{
-			CreateClusterOKE: &oke2.Cluster{
-				Version:   oke.Version,
-				NodePools: nodepools,
-			},
-		},
-	}
 }
 
 func createACSKRequest(acsk *DefaultsACSK, defaultNodePoolName string) *pkgCluster.CreateClusterRequest {
@@ -137,12 +117,6 @@ type DefaultsACSK struct {
 	NodePools                DefaultsACSKNodePools `yaml:"nodePools"`
 }
 
-type DefaultsOKE struct {
-	Location  string               `yaml:"location"`
-	Version   string               `yaml:"version"`
-	NodePools DefaultsOKENodePools `yaml:"nodePools"`
-}
-
 type DefaultsACSKNodePools struct {
 	Autoscaling        bool   `yaml:"autoscaling"`
 	Count              int    `yaml:"count"`
@@ -151,13 +125,4 @@ type DefaultsACSKNodePools struct {
 	Image              string `yaml:"image"`
 	InstanceType       string `yaml:"instanceType"`
 	SystemDiskCategory string `yaml:"systemDiskCategory"`
-}
-
-type DefaultsOKENodePools struct {
-	Version  string `yaml:"version"`
-	Count    int    `yaml:"count"`
-	MinCount int    `yaml:"minCount"`
-	MaxCount int    `yaml:"maxCount"`
-	Image    string `yaml:"image"`
-	Shape    string `yaml:"shape"`
 }

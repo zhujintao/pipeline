@@ -7,6 +7,7 @@ import (
 	pkgProfileEC2 "github.com/banzaicloud/pipeline/pkg/profiles/ec2"
 	pkgProfileEKS "github.com/banzaicloud/pipeline/pkg/profiles/eks"
 	pkgProfileGKE "github.com/banzaicloud/pipeline/pkg/profiles/gke"
+	pkgProfileOKE "github.com/banzaicloud/pipeline/pkg/profiles/oke"
 	"gopkg.in/yaml.v2"
 )
 
@@ -52,7 +53,7 @@ type DistributionProperties struct {
 	EC2 pkgProfileEC2.Defaults `yaml:"ec2"`
 	EKS pkgProfileEKS.Defaults `yaml:"eks"` // todo put back
 	GKE pkgProfileGKE.Defaults `yaml:"gke"`
-	//OKE  DefaultsOKE            `yaml:"oke"`
+	OKE pkgProfileOKE.Defaults `yaml:"oke"`
 }
 
 func loadDefaults() (defaults *Defaults, images *AmazonImages, err error) {
