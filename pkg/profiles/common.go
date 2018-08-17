@@ -8,6 +8,7 @@ import (
 	aks2 "github.com/banzaicloud/pipeline/pkg/cluster/aks"
 	"github.com/banzaicloud/pipeline/pkg/profiles/defaults"
 	pkgProfileEC2 "github.com/banzaicloud/pipeline/pkg/profiles/ec2"
+	pkgProfileEKS "github.com/banzaicloud/pipeline/pkg/profiles/eks"
 	pkgProfileGKE "github.com/banzaicloud/pipeline/pkg/profiles/gke"
 	"github.com/banzaicloud/pipeline/pkg/providers"
 	oke2 "github.com/banzaicloud/pipeline/pkg/providers/oracle/cluster"
@@ -33,6 +34,8 @@ func getProfileManager(distributionType string) (ProfileManager, error) {
 	switch distributionType {
 	case pkgCluster.EC2:
 		return pkgProfileEC2.NewProfile(def.DefaultNodePoolName, &def.Distributions.EC2, images.EC2.GetDefaultAmazonImage(def.Distributions.EC2.Location)), nil // todo refactor!!
+	case pkgCluster.EKS:
+		return pkgProfileEKS.NewProfile(def.DefaultNodePoolName, &def.Distributions.EKS, images.EKS.GetDefaultAmazonImage(def.Distributions.EKS.Location)), nil // todo refactor!!
 	case pkgCluster.GKE:
 		return pkgProfileGKE.NewProfile(def.DefaultNodePoolName, &def.Distributions.GKE), nil
 	}
@@ -94,38 +97,6 @@ func createOKERequest(oke *DefaultsOKE, defaultNodePoolName string) *pkgCluster.
 		},
 	}
 }
-
-//func createEKSRequest(eks *DefaultsEKS, defaultNodePoolName string, images DefaultAmazonImages) *pkgCluster.CreateClusterRequest {
-//
-//	image := GetAmazonImage(images.EKS, eks.Location)
-//
-//	nodepools := make(map[string]*ec22.NodePool)
-//	nodepools[defaultNodePoolName] = &ec22.NodePool{
-//		InstanceType: eks.NodePools.InstanceType,
-//		SpotPrice:    eks.NodePools.SpotPrice,
-//		Autoscaling:  eks.NodePools.Autoscaling,
-//		MinCount:     eks.NodePools.MinCount,
-//		MaxCount:     eks.NodePools.MaxCount,
-//		Count:        eks.NodePools.Count,
-//		Image:        image,
-//	}
-//
-//	return &pkgCluster.CreateClusterRequest{
-//		Location: eks.Location,
-//		Cloud:    pkgCluster.Amazon,
-//		Properties: &pkgCluster.CreateClusterProperties{
-//			CreateClusterEKS: &eks2.CreateClusterEKS{
-//				Version:   eks.Version,
-//				NodePools: nodepools,
-//			},
-//		},
-//	}
-//
-//}
-//
-//func GetAmazonImage(images AmazonImages, location string) string {
-//	return images[location]
-//}
 
 func createAKSRequest(aks *DefaultsAKS, defaultNodePoolName string) *pkgCluster.CreateClusterRequest {
 
@@ -191,12 +162,6 @@ type DefaultsAKS struct {
 	Location  string               `yaml:"location"`
 	Version   string               `yaml:"version"`
 	NodePools DefaultsAKSNodePools `yaml:"nodePools"`
-}
-
-type DefaultsEKS struct {
-	Location string `yaml:"location"`
-	Version  string `yaml:"version"`
-	//NodePools DefaultsAmazonNodePools `yaml:"nodePools"` // todo put back
 }
 
 type DefaultsOKE struct {

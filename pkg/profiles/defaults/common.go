@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 
 	pkgProfileEC2 "github.com/banzaicloud/pipeline/pkg/profiles/ec2"
+	pkgProfileEKS "github.com/banzaicloud/pipeline/pkg/profiles/eks"
 	pkgProfileGKE "github.com/banzaicloud/pipeline/pkg/profiles/gke"
 	"gopkg.in/yaml.v2"
 )
@@ -48,7 +49,7 @@ type DistributionProperties struct {
 	//ACSK DefaultsACSK           `yaml:"acsk"`
 	//AKS  DefaultsAKS            `yaml:"aks"`
 	EC2 pkgProfileEC2.Defaults `yaml:"ec2"`
-	//EKS  DefaultsEKS            `yaml:"eks"` // todo put back
+	EKS pkgProfileEKS.Defaults `yaml:"eks"` // todo put back
 	GKE pkgProfileGKE.Defaults `yaml:"gke"`
 	//OKE  DefaultsOKE            `yaml:"oke"`
 }
