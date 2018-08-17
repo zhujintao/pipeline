@@ -5,7 +5,7 @@ import (
 
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
 	acsk2 "github.com/banzaicloud/pipeline/pkg/cluster/acsk"
-	aks2 "github.com/banzaicloud/pipeline/pkg/cluster/aks"
+	pkgProfileAKS "github.com/banzaicloud/pipeline/pkg/profiles/aks"
 	"github.com/banzaicloud/pipeline/pkg/profiles/defaults"
 	pkgProfileEC2 "github.com/banzaicloud/pipeline/pkg/profiles/ec2"
 	pkgProfileEKS "github.com/banzaicloud/pipeline/pkg/profiles/eks"
@@ -32,6 +32,8 @@ func getProfileManager(distributionType string) (ProfileManager, error) {
 	}
 
 	switch distributionType {
+	case pkgCluster.AKS:
+		return pkgProfileAKS.NewProfile(def.DefaultNodePoolName, &def.Distributions.AKS), nil
 	case pkgCluster.EC2:
 		return pkgProfileEC2.NewProfile(def.DefaultNodePoolName, &def.Distributions.EC2, images.EC2.GetDefaultAmazonImage(def.Distributions.EC2.Location)), nil // todo refactor!!
 	case pkgCluster.EKS:
@@ -98,29 +100,6 @@ func createOKERequest(oke *DefaultsOKE, defaultNodePoolName string) *pkgCluster.
 	}
 }
 
-func createAKSRequest(aks *DefaultsAKS, defaultNodePoolName string) *pkgCluster.CreateClusterRequest {
-
-	nodepool := make(map[string]*aks2.NodePoolCreate)
-	nodepool[defaultNodePoolName] = &aks2.NodePoolCreate{
-		Autoscaling:      aks.NodePools.Autoscaling,
-		MinCount:         aks.NodePools.MinCount,
-		MaxCount:         aks.NodePools.MaxCount,
-		Count:            aks.NodePools.Count,
-		NodeInstanceType: aks.NodePools.InstanceType,
-	}
-
-	return &pkgCluster.CreateClusterRequest{
-		Location: aks.Location,
-		Cloud:    pkgCluster.Azure,
-		Properties: &pkgCluster.CreateClusterProperties{
-			CreateClusterAKS: &aks2.CreateClusterAKS{
-				KubernetesVersion: aks.Version,
-				NodePools:         nodepool,
-			},
-		},
-	}
-}
-
 func createACSKRequest(acsk *DefaultsACSK, defaultNodePoolName string) *pkgCluster.CreateClusterRequest {
 	nodepools := make(acsk2.NodePools)
 	nodepools[defaultNodePoolName] = &acsk2.NodePool{
@@ -158,12 +137,6 @@ type DefaultsACSK struct {
 	NodePools                DefaultsACSKNodePools `yaml:"nodePools"`
 }
 
-type DefaultsAKS struct {
-	Location  string               `yaml:"location"`
-	Version   string               `yaml:"version"`
-	NodePools DefaultsAKSNodePools `yaml:"nodePools"`
-}
-
 type DefaultsOKE struct {
 	Location  string               `yaml:"location"`
 	Version   string               `yaml:"version"`
@@ -178,14 +151,6 @@ type DefaultsACSKNodePools struct {
 	Image              string `yaml:"image"`
 	InstanceType       string `yaml:"instanceType"`
 	SystemDiskCategory string `yaml:"systemDiskCategory"`
-}
-
-type DefaultsAKSNodePools struct {
-	Autoscaling  bool   `yaml:"autoscaling"`
-	Count        int    `yaml:"count"`
-	MinCount     int    `yaml:"minCount"`
-	MaxCount     int    `yaml:"maxCount"`
-	InstanceType string `yaml:"instanceType"`
 }
 
 type DefaultsOKENodePools struct {
