@@ -82,14 +82,15 @@ func (r *SpotguideRepo) AfterFind() error {
 }
 
 type LaunchRequest struct {
-	SpotguideName    string                       `json:"spotguideName" binding:"required"`
-	SpotguideVersion string                       `json:"spotguideVersion"`
-	RepoOrganization string                       `json:"repoOrganization" binding:"required"`
-	RepoName         string                       `json:"repoName" binding:"required"`
-	RepoPrivate      bool                         `json:"repoPrivate"`
-	Cluster          client.CreateClusterRequest  `json:"cluster" binding:"required"`
-	Secrets          []secret.CreateSecretRequest `json:"secrets"`
-	Values           map[string]interface{}       `json:"values"` // Values passed to the Helm deployment in the 'deploy_application' step
+	SpotguideName    string                                  `json:"spotguideName" binding:"required"`
+	SpotguideVersion string                                  `json:"spotguideVersion"`
+	RepoOrganization string                                  `json:"repoOrganization" binding:"required"`
+	RepoName         string                                  `json:"repoName" binding:"required"`
+	RepoPrivate      bool                                    `json:"repoPrivate"`
+	Cluster          client.CreateClusterRequest             `json:"cluster" binding:"required"`
+	Buckets          []client.CreateObjectStoreBucketRequest `json:"buckets"`
+	Secrets          []secret.CreateSecretRequest            `json:"secrets"`
+	Values           map[string]interface{}                  `json:"values"` // Values passed to the Helm deployment in the 'deploy_application' step
 }
 
 func (r LaunchRequest) RepoFullname() string {
