@@ -140,7 +140,7 @@ license-cache: bin/licensei ## Generate license cache
 
 .PHONY: test
 test:
-	go list ./... | xargs -n1 go test -v -parallel 1 2>&1
+	go test
 
 bin/go-junit-report:
 	@mkdir -p bin
