@@ -212,7 +212,13 @@ func Init(db *gorm.DB) {
 
 	TokenStore = bauth.NewVaultTokenStore("pipeline")
 
-	Handler = bauth.JWTAuth(TokenStore, signingKey, claimConverter, cookieExtractor{sessionStorer})
+	Handler = bauth.JWTAuth(
+		TokenStore,
+		signingKey,
+		bauth.WithClaimConverter(claimConverter),
+		bauth.WithJWTExtractor(cookieExtractor{sessionStorer}),
+		bauth.WithExternalIssuer(JwtIssuer+"/build"),
+	)
 }
 
 func StartTokenStoreGC() {
@@ -293,7 +299,7 @@ func GenerateToken(c *gin.Context) {
 		Name        string     `json:"name,omitempty"`
 		VirtualUser string     `json:"virtualUser,omitempty"`
 		ExpiresAt   *time.Time `json:"expiresAt,omitempty"`
-	}{Name: "generated"}
+	}{Name: "Pipeline API token"}
 
 	if c.Request.Method == http.MethodPost && c.Request.ContentLength > 0 {
 		if err := c.ShouldBindJSON(&tokenRequest); err != nil {
@@ -302,15 +308,36 @@ func GenerateToken(c *gin.Context) {
 		}
 	}
 
-	isForVirtualUser := tokenRequest.VirtualUser != ""
-
 	userID := currentUser.IDString()
 	userLogin := currentUser.Login
 	tokenType := DroneUserTokenType
-	if isForVirtualUser {
-		userID = tokenRequest.VirtualUser
-		userLogin = tokenRequest.VirtualUser
+
+	if tokenRequest.VirtualUser != "" {
+		userID = strings.Replace(tokenRequest.VirtualUser, "/", ":", -1)
+		userLogin = tokenRequest.VirtualUser // the repo full name will be the userLogin
 		tokenType = DroneHookTokenType
+
+		orgName := GetOrgNameFromVirtualUser(tokenRequest.VirtualUser)
+		organization := Organization{Name: orgName}
+		err := Auth.GetDB(c.Request).
+			Model(currentUser).
+			Where(&organization).
+			Related(&organization, "Organizations").Error
+		if err != nil {
+			statusCode := http.StatusInternalServerError
+			if gorm.IsRecordNotFoundError(err) {
+				statusCode = http.StatusBadRequest
+			}
+			c.AbortWithStatusJSON(statusCode, gin.H{
+				"message": "failed to query organization name for virtual user",
+				"error":   err.Error(),
+			})
+			errorHandler.Handle(errors.Wrap(err, "failed to query organization name for virtual user"))
+			return
+		}
+
+		AddDefaultRoleForVirtualUser(userID)
+		AddOrgRoleForUser(userID, organization.ID)
 	}
 
 	tokenID, signedToken, err := createAndStoreAPIToken(userID, userLogin, tokenType, tokenRequest.Name, tokenRequest.ExpiresAt)
@@ -319,24 +346,6 @@ func GenerateToken(c *gin.Context) {
 		err = c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("%s", err))
 		errorHandler.Handle(errors.Wrap(err, "failed to create and store API token"))
 		return
-	}
-
-	if isForVirtualUser {
-		orgName := GetOrgNameFromVirtualUser(tokenRequest.VirtualUser)
-		organization := Organization{Name: orgName}
-		err = Auth.GetDB(c.Request).
-			Model(currentUser).
-			Where(&organization).
-			Related(&organization, "Organizations").Error
-		if err != nil {
-			statusCode := GormErrorToStatusCode(err)
-			err = c.AbortWithError(statusCode, err)
-			errorHandler.Handle(errors.Wrap(err, "failed to query organization name for virtual user"))
-			return
-		}
-
-		AddDefaultRoleForVirtualUser(userID)
-		AddOrgRoleForUser(userID, organization.ID)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"id": tokenID, "token": signedToken})

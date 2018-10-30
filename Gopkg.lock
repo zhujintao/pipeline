@@ -276,7 +276,8 @@
   revision = "72e04c1bddb8e7246cc69496f942d35fc26aeb23"
 
 [[projects]]
-  digest = "1:96570024d406d186e24b982a004162701cdceeb04bbe7f2d73153db10ebd4b9f"
+  branch = "auth-options"
+  digest = "1:3ab2492525287e7805ad93771478490a6499bf134723698c705c2f180d28dfdd"
   name = "github.com/banzaicloud/bank-vaults"
   packages = [
     "pkg/auth",
@@ -286,8 +287,7 @@
     "pkg/vault",
   ]
   pruneopts = "NUT"
-  revision = "380dcbf32208b08b816dd2003d885c214df5288a"
-  version = "0.3.9"
+  revision = "7647e5dd3fabcec7dd6ce4ea04ffaa3c3384a4f6"
 
 [[projects]]
   branch = "master"
