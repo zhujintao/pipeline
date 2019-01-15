@@ -18,11 +18,13 @@ import (
 	"crypto/x509/pkix"
 	"encoding/base64"
 	"fmt"
+	"regexp"
 
 	"github.com/banzaicloud/bank-vaults/pkg/tls"
 	"github.com/banzaicloud/pipeline/auth"
 	pipConfig "github.com/banzaicloud/pipeline/config"
 	"github.com/banzaicloud/pipeline/internal/global"
+	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
 	pkgHelm "github.com/banzaicloud/pipeline/pkg/helm"
 	pkgSecret "github.com/banzaicloud/pipeline/pkg/secret"
 	"github.com/banzaicloud/pipeline/secret"
@@ -41,7 +43,14 @@ type traefikValues struct {
 	SSL         sslTraefikValues `json:"ssl"`
 	Affinity    v1.Affinity      `json:"affinity"`
 	Tolerations []v1.Toleration  `json:"tolerations"`
+	Service     traefikService   `json:"service,omitempty"`
 }
+
+type traefikService struct {
+	Annotations traefikAnnotations `json:"annotations"`
+}
+
+type traefikAnnotations map[string]string
 
 type sslTraefikValues struct {
 	Enabled        bool     `json:"enabled"`
@@ -52,7 +61,10 @@ type sslTraefikValues struct {
 	DefaultKey     string   `json:"defaultKey"`
 }
 
-const DefaultCertSecretName = "default-ingress-cert"
+const (
+	DefaultCertSecretName          = "default-ingress-cert"
+	askLoadBalancerSvcASAnnotation = "service.beta.kubernetes.io/azure-load-balancer-mode"
+)
 
 // InstallIngressControllerPostHook post hooks can't return value, they can log error and/or update state?
 func InstallIngressControllerPostHook(cluster CommonCluster) error {
@@ -119,6 +131,21 @@ func InstallIngressControllerPostHook(cluster CommonCluster) error {
 		},
 	}
 
+	if cluster.GetDistribution() == pkgCluster.AKS {
+		asName, err := getAKSIngressServiceAvailabilitySetName(cluster)
+		if err != nil {
+			return emperror.Wrap(err, "could not get AKS availability set for ingress affinity")
+		}
+		if asName != "" {
+			log.WithField("asName", asName).Debug("use specific availabilitySet for ingress on AKS")
+			ingressValues.Traefik.Service = traefikService{
+				Annotations: traefikAnnotations{
+					askLoadBalancerSvcASAnnotation: asName,
+				},
+			}
+		}
+	}
+
 	ingressValuesJson, err := yaml.Marshal(ingressValues)
 	if err != nil {
 		return emperror.Wrap(err, "converting ingress config to json failed")
@@ -127,4 +154,30 @@ func InstallIngressControllerPostHook(cluster CommonCluster) error {
 	namespace := viper.GetString(pipConfig.PipelineSystemNamespace)
 
 	return installDeployment(cluster, namespace, pkgHelm.BanzaiRepository+"/pipeline-cluster-ingress", "ingress", ingressValuesJson, "", false)
+}
+
+func getAKSIngressServiceAvailabilitySetName(cluster CommonCluster) (string, error) {
+	var asName string
+
+	headNodePoolName := viper.GetString(pipConfig.PipelineHeadNodePoolName)
+
+	r, err := regexp.Compile("(\\d+)-\\d+$")
+	if err != nil {
+		return asName, emperror.Wrap(err, "could not compile regex")
+	}
+
+	var matches []string
+	nodeNames, err := cluster.ListNodeNames()
+	if err != nil {
+		return asName, emperror.Wrap(err, "cloud not get node names")
+	}
+	if len(nodeNames[headNodePoolName]) > 0 {
+		matches = r.FindStringSubmatch(nodeNames[headNodePoolName][0])
+		if len(matches) == 2 {
+			asName = fmt.Sprintf("%s-availabilitySet-%s", headNodePoolName, matches[1])
+			return asName, nil
+		}
+	}
+
+	return asName, nil
 }
