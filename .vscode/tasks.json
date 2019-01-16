@@ -17,6 +17,15 @@
             }
         },
         {
+            "label": "generate client",
+            "type": "process",
+            "command": "make",
+            "args": [
+                "generate-client"
+            ],
+            "problemMatcher": []
+        },
+        {
             "label": "run",
             "type": "process",
             "command": "build/pipeline",
@@ -25,7 +34,8 @@
                 "env": {
                     "VAULT_ADDR": "http://localhost:8200"
                 }
-            }
+            },
+            "problemMatcher": []
         },
         {
             "label": "test",
@@ -44,6 +54,15 @@
                 "kind": "test",
                 "isDefault": true
             }
+        },
+        {
+            "label": "make vendor",
+            "type": "process",
+            "command": "make",
+            "args": [
+                "vendor"
+            ],
+            "problemMatcher": []
         }
     ]
 }
