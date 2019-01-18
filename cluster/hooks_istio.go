@@ -15,12 +15,14 @@
 package cluster
 
 import (
+	"github.com/banzaicloud/pipeline/config"
 	"github.com/banzaicloud/pipeline/internal/istio"
 	"github.com/banzaicloud/pipeline/pkg/cluster"
 	pkgHelm "github.com/banzaicloud/pipeline/pkg/helm"
 	"github.com/banzaicloud/pipeline/pkg/k8sclient"
 	"github.com/ghodss/yaml"
 	"github.com/goph/emperror"
+	"github.com/spf13/viper"
 )
 
 // InstallServiceMeshParams describes InstallServiceMesh posthook params
@@ -63,7 +65,7 @@ func InstallServiceMesh(cluster CommonCluster, param cluster.PostHookParam) erro
 		return emperror.Wrap(err, "failed to marshal yaml values")
 	}
 
-	err = installDeployment(cluster, istio.Namespace, pkgHelm.BanzaiRepository+"/istio", "istio", marshalledValues, "", false)
+	err = installDeployment(cluster, istio.Namespace, pkgHelm.BanzaiRepository+"/istio", "istio", marshalledValues, viper.GetString(config.IstioChartVersion), false)
 	if err != nil {
 		return emperror.Wrap(err, "installing Istio failed")
 	}
