@@ -259,6 +259,7 @@ func (s *ObjectStore) createUpdateStorageAccountSecret(accesskey string) (string
 		},
 		Tags: []string{
 			fmt.Sprintf("azureStorageAccount:%v", s.storageAccount),
+			pkgSecret.TagBanzaiReadonly,
 		},
 	}
 	secretId, err := secret.Store.CreateOrUpdate(s.org.ID, &secretRequest)
