@@ -95,6 +95,7 @@ func (c *pkeCreator) Create(ctx context.Context) error {
 		SecretID:            string(c.cluster.GetSecretId()),
 		Region:              c.cluster.GetLocation(),
 		PipelineExternalURL: externalBaseURL,
+		DexEnabled:          c.request.Properties.CreateClusterPKE.DexEnabled,
 	}
 	workflowOptions := client.StartWorkflowOptions{
 		TaskList:                     "pipeline",

@@ -86,9 +86,9 @@ func (c *Cluster) GetAWSClient() (*session.Session, error) {
 	return nil, errors.New(fmt.Sprintf("failed to cast cluster to AWSCluster, got type: %T", c.CommonCluster))
 }
 
-func (c *Cluster) GetBootstrapCommand(nodePoolName, url, token string) (string, error) {
+func (c *Cluster) GetBootstrapCommand(nodePoolName, url, token string, dexEnabled bool) (string, error) {
 	if awscluster, ok := c.CommonCluster.(pkeworkflow.AWSCluster); ok {
-		return awscluster.GetBootstrapCommand(nodePoolName, url, token)
+		return awscluster.GetBootstrapCommand(nodePoolName, url, token, dexEnabled)
 	}
 	return "", errors.New(fmt.Sprintf("failed to cast cluster to AWSCluster, got type: %T", c.CommonCluster))
 }

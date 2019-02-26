@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	"github.com/banzaicloud/pipeline/internal/cluster/auth"
-	"github.com/pkg/errors"
+	"github.com/goph/emperror"
 )
 
 const CreateDexClientActivityName = "pke-create-dex-client-activity"
@@ -48,7 +48,7 @@ func (a *CreateDexClientActivity) Execute(ctx context.Context, input CreateDexCl
 
 	err = a.clusterAuthService.RegisterCluster(ctx, cluster.GetName(), cluster.GetID(), cluster.GetUID())
 	if err != nil {
-		return errors.New(fmt.Sprintf("can't create dex client for cluster %v", cluster))
+		return emperror.Wrap(err, fmt.Sprintf("can't create dex client for cluster %+v", cluster))
 	}
 
 	return nil

@@ -51,6 +51,7 @@ type CreateMasterActivityInput struct {
 	ExternalBaseUrl       string
 	Pool                  NodePool
 	SSHKeyName            string
+	DexEnabled            bool
 }
 
 func (a *CreateMasterActivity) Execute(ctx context.Context, input CreateMasterActivityInput) (string, error) {
@@ -75,7 +76,7 @@ func (a *CreateMasterActivity) Execute(ctx context.Context, input CreateMasterAc
 		return "", emperror.Wrap(err, "can't generate Pipeline token")
 	}
 
-	bootstrapCommand, err := awsCluster.GetBootstrapCommand("master", input.ExternalBaseUrl, signedToken)
+	bootstrapCommand, err := awsCluster.GetBootstrapCommand("master", input.ExternalBaseUrl, signedToken, input.DexEnabled)
 	if err != nil {
 		return "", emperror.Wrap(err, "failed to fetch bootstrap command")
 	}

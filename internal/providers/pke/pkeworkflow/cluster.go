@@ -37,7 +37,7 @@ type Cluster interface {
 
 type AWSCluster interface {
 	GetAWSClient() (*session.Session, error)
-	GetBootstrapCommand(string, string, string) (string, error)
+	GetBootstrapCommand(string, string, string, bool) (string, error)
 	SaveNetworkCloudProvider(string, string, []string) error
 	SaveNetworkApiServerAddress(string, string) error
 }

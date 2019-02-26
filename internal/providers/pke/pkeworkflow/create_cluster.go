@@ -58,6 +58,7 @@ type CreateClusterWorkflowInput struct {
 	SecretID            string
 	Region              string
 	PipelineExternalURL string
+	DexEnabled          bool
 }
 
 func CreateClusterWorkflow(ctx workflow.Context, input CreateClusterWorkflowInput) error {
@@ -193,7 +194,7 @@ func CreateClusterWorkflow(ctx workflow.Context, input CreateClusterWorkflowInpu
 	}
 
 	// Create dex client for the cluster
-	{
+	if input.DexEnabled {
 		activityInput := CreateDexClientActivityInput{
 			ClusterID: input.ClusterID,
 		}
@@ -233,6 +234,7 @@ func CreateClusterWorkflow(ctx workflow.Context, input CreateClusterWorkflowInpu
 			ExternalBaseUrl:       input.PipelineExternalURL,
 			Pool:                  master,
 			SSHKeyName:            keyOut.KeyName,
+			DexEnabled:            input.DexEnabled,
 		}
 		err := workflow.ExecuteActivity(ctx, CreateMasterActivityName, activityInput).Get(ctx, &masterStackID)
 		if err != nil {
@@ -278,6 +280,7 @@ func CreateClusterWorkflow(ctx workflow.Context, input CreateClusterWorkflowInpu
 					ClusterSecurityGroup:  masterOutput["ClusterSecurityGroup"],
 					ExternalBaseUrl:       input.PipelineExternalURL,
 					SSHKeyName:            keyOut.KeyName,
+					DexEnabled:            input.DexEnabled,
 				}
 
 				err := workflow.ExecuteActivity(ctx, CreateWorkerPoolActivityName, createWorkerPoolActivityInput).Get(ctx, nil)

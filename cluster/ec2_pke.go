@@ -275,7 +275,7 @@ func (c *EC2ClusterPKE) SetCurrentWorkflowID(workflowID string) error {
 	return nil
 }
 
-func (c *EC2ClusterPKE) CreatePKECluster(tokenGenerator TokenGenerator, externalBaseURL string) error {
+func (c *EC2ClusterPKE) CreatePKECluster(tokenGenerator TokenGenerator, externalBaseURL string, dexEnabled bool) error {
 	// Fetch
 
 	// Generate certificates
@@ -310,7 +310,7 @@ func (c *EC2ClusterPKE) CreatePKECluster(tokenGenerator TokenGenerator, external
 	//}
 	token := "XXX" // TODO masked from dumping valid tokens to log
 	for _, nodePool := range c.model.NodePools {
-		cmd, err := c.GetBootstrapCommand(nodePool.Name, externalBaseURL, token)
+		cmd, err := c.GetBootstrapCommand(nodePool.Name, externalBaseURL, token, dexEnabled)
 		if err != nil {
 			return err
 		}
@@ -636,7 +636,7 @@ func (c *EC2ClusterPKE) GetPipelineToken(tokenGenerator interface{}) (string, er
 }
 
 // GetBootstrapCommand returns a command line to use to install a node in the given nodepool
-func (c *EC2ClusterPKE) GetBootstrapCommand(nodePoolName, url, token string) (string, error) {
+func (c *EC2ClusterPKE) GetBootstrapCommand(nodePoolName, url, token string, dexEnabled bool) (string, error) {
 	subcommand := "worker"
 	var np internalPke.NodePool
 	for _, np = range c.model.NodePools {
@@ -695,12 +695,9 @@ func (c *EC2ClusterPKE) GetBootstrapCommand(nodePoolName, url, token string) (st
 		return "", err
 	}
 
-	dexIssuerURL := viper.GetString("auth.dexURL")
-	dexClientID := c.GetUID()
-
 	// master
 	if subcommand == "master" {
-		return fmt.Sprintf("pke install %s "+
+		command := fmt.Sprintf("pke install %s "+
 			"--pipeline-url=%q "+
 			"--pipeline-token=%q "+
 			"--pipeline-org-id=%d "+
@@ -713,9 +710,7 @@ func (c *EC2ClusterPKE) GetBootstrapCommand(nodePoolName, url, token string) (st
 			"--kubernetes-pod-network-cidr=10.20.0.0/16 "+
 			"--kubernetes-infrastructure-cidr=%q "+
 			"--kubernetes-api-server=%q "+
-			"--kubernetes-cluster-name=%q "+
-			"--kubernetes-oidc-issuer-url=%q "+
-			"--kubernetes-oidc-client-id=%q",
+			"--kubernetes-cluster-name=%q",
 			subcommand,
 			url,
 			token,
@@ -725,9 +720,19 @@ func (c *EC2ClusterPKE) GetBootstrapCommand(nodePoolName, url, token string) (st
 			infrastructureCIDR,
 			apiAddress,
 			c.GetName(),
-			dexIssuerURL,
-			dexClientID,
-		), nil
+		)
+
+		if dexEnabled {
+			dexIssuerURL := viper.GetString("auth.dexURL")
+			dexClientID := c.GetUID()
+
+			command = fmt.Sprintf("%s "+
+				"--kubernetes-oidc-issuer-url=%q "+
+				"--kubernetes-oidc-client-id=%q",
+				command, dexIssuerURL, dexClientID)
+		}
+
+		return command, nil
 	}
 
 	// worker
