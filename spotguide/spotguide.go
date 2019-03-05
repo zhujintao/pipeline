@@ -38,6 +38,7 @@ import (
 	yaml2 "github.com/ghodss/yaml"
 	"github.com/google/go-github/github"
 	"github.com/goph/emperror"
+	"github.com/huandu/xstrings"
 	"github.com/jinzhu/gorm"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
@@ -597,6 +598,7 @@ func createSecrets(request *LaunchRequest, orgID uint, userID uint) error {
 
 	for _, secretRequest := range request.Secrets {
 
+		secretRequest.Name = xstrings.ToKebabCase(secretRequest.Name)
 		secretRequest.Tags = append(secretRequest.Tags, repoTag)
 
 		if _, err := secret.Store.Store(orgID, secretRequest); err != nil {
