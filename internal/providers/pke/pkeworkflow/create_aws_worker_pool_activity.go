@@ -153,7 +153,7 @@ func (a *CreateWorkerPoolActivity) Execute(ctx context.Context, input CreateWork
 			},
 			{
 				ParameterKey:   aws.String("PkeVersion"),
-				ParameterValue: aws.String("0.0.8"),
+				ParameterValue: aws.String("0.0.9"),
 			},
 			{
 				ParameterKey:   aws.String("KeyName"),
