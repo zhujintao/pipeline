@@ -137,7 +137,7 @@ require (
 	github.com/hashicorp/vault-plugin-secrets-gcpkms v0.0.0-20190116164938-d6b25b0b4a39 // indirect
 	github.com/hashicorp/vault-plugin-secrets-kv v0.0.0-20190227052836-76a82948fe5b // indirect
 	github.com/heptio/ark v0.9.3
-	github.com/huandu/xstrings v1.0.0 // indirect
+	github.com/huandu/xstrings v1.2.0
 	github.com/jeffchao/backoff v0.0.0-20140404060208-9d7fd7aa17f2 // indirect
 	github.com/jefferai/jsonx v1.0.0 // indirect
 	github.com/jessevdk/go-flags v1.4.0 // indirect
