@@ -242,7 +242,6 @@ func CreateClusterWorkflow(ctx workflow.Context, input CreateClusterWorkflowInpu
 		}
 
 		masterInput.TargetGroup = activityOutput.TargetGroup
-		masterInput.NLBSecurityGroup = activityOutput.SecurityGroup
 		externalAddress = activityOutput.DNSName
 
 	} else {
