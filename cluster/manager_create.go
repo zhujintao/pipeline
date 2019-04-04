@@ -67,19 +67,11 @@ func (m *Manager) CreateCluster(ctx context.Context, creationCtx CreationContext
 		"cluster":      creationCtx.Name,
 	})
 
-	errorHandler := emperror.HandlerWith(
-		m.getErrorHandler(ctx),
-		"organization", creationCtx.OrganizationID,
-		"user", creationCtx.UserID,
-		"cluster", creationCtx.Name,
-	)
-
-	logger.Debug("looking for existing cluster")
 	if err := m.assertNotExists(creationCtx); err != nil {
 		return nil, err
 	}
 
-	logger.Info("validating secret")
+	logger.Debug("validating secret")
 	if len(creationCtx.SecretIDs) > 0 {
 		var err error
 		for _, secretID := range creationCtx.SecretIDs {
@@ -138,10 +130,13 @@ func (m *Manager) CreateCluster(ctx context.Context, creationCtx CreationContext
 		return nil, err
 	}
 
-	logger.Infof("creating cluster")
+	logger.Info("creating cluster")
+
+	errorHandler := m.getClusterErrorHandler(ctx, cluster)
 
 	go func() {
-		defer emperror.HandleRecover(m.errorHandler)
+		defer emperror.HandleRecover(errorHandler.WithStatus(pkgCluster.Error, "internal error while creating cluster"))
+
 		ctx = context.WithValue(ctx, ExternalBaseURLKey, creationCtx.ExternalBaseURL)
 		err := m.createCluster(ctx, cluster, creator, creationCtx.PostHooks, logger)
 		if err != nil {

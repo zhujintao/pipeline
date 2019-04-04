@@ -49,23 +49,14 @@ func (m *Manager) UpdateCluster(ctx context.Context, updateCtx UpdateContext, up
 		"cluster":      updateCtx.ClusterID,
 	})
 
-	errorHandler := emperror.HandlerWith(
-		m.getErrorHandler(ctx),
-		"organization", updateCtx.OrganizationID,
-		"user", updateCtx.UserID,
-		"cluster", updateCtx.ClusterID,
-	)
-
-	logger.Info("validating update context")
+	logger.Debug("validating update context")
 
 	err := updater.Validate(ctx)
 	if err != nil {
 		return errors.WithMessage(err, "cluster update validation failed")
 	}
 
-	logger.Info("update context is valid")
-
-	logger.Info("preparing cluster update")
+	logger.Debug("preparing cluster update")
 
 	cluster, err := updater.Prepare(ctx)
 	if err != nil {
@@ -82,9 +73,10 @@ func (m *Manager) UpdateCluster(ctx context.Context, updateCtx UpdateContext, up
 	}
 
 	logger.Info("updating cluster")
+	errorHandler := m.getClusterErrorHandler(ctx, cluster)
 
 	go func() {
-		defer emperror.HandleRecover(m.errorHandler)
+		defer emperror.HandleRecover(errorHandler.WithStatus(pkgCluster.Warning, "internal error while updating cluster"))
 
 		err := m.updateCluster(ctx, updateCtx, cluster, updater)
 		if err != nil {

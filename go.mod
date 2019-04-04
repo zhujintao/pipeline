@@ -40,7 +40,6 @@ require (
 	github.com/banzaicloud/nodepool-labels-operator v0.0.0-20190219103855-a13c1b05f240
 	github.com/banzaicloud/prometheus-config v0.0.0-20181214142820-fc6ae4756a29
 	github.com/bitly/go-hostpool v0.0.0-20171023180738-a3a6125de932 // indirect
-	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/boombuler/barcode v1.0.0 // indirect
 	github.com/briankassouf/jose v0.9.1 // indirect
@@ -88,6 +87,7 @@ require (
 	github.com/gin-gonic/gin v1.3.1-0.20190204012700-5acf6601170b
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-ldap/ldap v3.0.1+incompatible // indirect
+	github.com/go-logr/zapr v0.1.1 // indirect
 	github.com/go-openapi/jsonpointer v0.0.0-20180322222829-3a0015ad55fa // indirect
 	github.com/go-openapi/jsonreference v0.0.0-20180322222742-3fb327e6747d // indirect
 	github.com/go-openapi/spec v0.0.0-20180326232708-9acd88844bc1 // indirect
@@ -103,7 +103,7 @@ require (
 	github.com/google/martian v2.1.0+incompatible // indirect
 	github.com/google/uuid v1.1.0 // indirect
 	github.com/googleapis/gax-go v2.0.0+incompatible // indirect
-	github.com/goph/emperror v0.16.0
+	github.com/goph/emperror v0.17.1
 	github.com/goph/logur v0.11.0
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75 // indirect
 	github.com/gorilla/sessions v0.0.0-20181208214519-12bd4761fc66
@@ -166,8 +166,6 @@ require (
 	github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/oklog/run v1.0.0
-	github.com/onsi/ginkgo v1.7.0 // indirect
-	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v0.1.1 // indirect
@@ -218,7 +216,7 @@ require (
 	github.com/uber/jaeger-client-go v2.15.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.0.0+incompatible // indirect
 	github.com/uber/tchannel-go v1.12.0 // indirect
-	github.com/xanzy/go-gitlab v0.16.0
+	github.com/xanzy/go-gitlab v0.16.2-0.20190325100843-bbb1af7187c8
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xlab/handysort v0.0.0-20150421192137-fb3537ed64a1 // indirect
 	go.etcd.io/bbolt v1.3.2 // indirect
@@ -258,6 +256,7 @@ require (
 	k8s.io/utils v0.0.0-20180208044234-258e2a2fa645 // indirect
 	layeh.com/radius v0.0.0-20190118135028-0f678f039617 // indirect
 	sigs.k8s.io/controller-runtime v0.1.10 // indirect
+	sigs.k8s.io/testing_frameworks v0.1.1 // indirect
 	vbom.ml/util v0.0.0-20170409195630-256737ac55c4 // indirect
 )
 

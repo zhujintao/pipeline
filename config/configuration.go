@@ -168,6 +168,7 @@ func init() {
 
 	// Set defaults TODO expand defaults
 	viper.SetDefault("cicd.url", "http://localhost:8000")
+	viper.SetDefault("cicd.scm", "github")
 	viper.SetDefault("helm.retryAttempt", 30)
 	viper.SetDefault("helm.retrySleepSeconds", 15)
 	viper.SetDefault("helm.tillerVersion", "v2.10.0")
@@ -281,7 +282,7 @@ func init() {
 	viper.SetDefault("gitlab.baseURL", "https://gitlab.com/")
 
 	viper.SetDefault(IstioOperatorChartVersion, "0.0.2")
-	viper.SetDefault(IstioGrafanaDashboardLocation, filepath.Join(pwd, "dashboards", "istio"))
+	viper.SetDefault(IstioGrafanaDashboardLocation, filepath.Join(pwd, "etc", "dashboards", "istio"))
 
 	viper.SetDefault(NodePoolLabelSetOperatorChartVersion, "0.0.2")
 
