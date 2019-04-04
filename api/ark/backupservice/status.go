@@ -25,8 +25,9 @@ import (
 	pkgCommon "github.com/banzaicloud/pipeline/pkg/common"
 )
 
-// Status gets an ARK backup deployment status by trying to create ARK client
-func Status(c *gin.Context) {
+// StatusDeprecated gets an ARK backup deployment status by trying to create ARK client
+// Deprecated: use GET method instead
+func StatusDeprecated(c *gin.Context) {
 	logger := correlationid.Logger(common.Log, c)
 	logger.Info("checking ARK deployment status")
 
@@ -39,4 +40,27 @@ func Status(c *gin.Context) {
 	}
 
 	c.Status(http.StatusOK)
+}
+
+// Status gets an ARK backup deployment status by trying to create ARK client
+func Status(c *gin.Context) {
+	logger := correlationid.Logger(common.Log, c)
+	logger.Info("checking ARK deployment status")
+
+	schedulesSvc := common.GetARKService(c.Request).GetSchedulesService()
+	_, err := schedulesSvc.List()
+	if err != nil {
+		err = errors.New("backup service not deployed")
+		common.ErrorHandler.Handle(err)
+		statusEnabledResponse(c, false)
+		return
+	}
+
+	statusEnabledResponse(c, true)
+}
+
+func statusEnabledResponse(c *gin.Context, enabled bool) {
+	c.JSON(http.StatusOK, gin.H{
+		"enabled": enabled,
+	})
 }
