@@ -5671,9 +5671,6 @@ components:
                             type: object
                             additionalProperties:
                                 $ref: '#/components/schemas/NodePoolsAzure'
-                        vnetSubnetID:
-                            type: string
-                            example: "/subscriptions/12345678-1234-5678-1234-123456789abc/resourceGroups/your-resource-group-name/providers/Microsoft.Network/virtualNetworks/your-vnet-name/subnets/your-vnet-subnet-name"
 
         NodePoolsAzure:
             type: object
@@ -5702,6 +5699,9 @@ components:
                         type: string
                         example:
                             example.io/label1: value1
+                vnetSubnetID:
+                    type: string
+                    example: "/subscriptions/12345678-1234-5678-1234-123456789abc/resourceGroups/your-resource-group-name/providers/Microsoft.Network/virtualNetworks/your-vnet-name/subnets/your-vnet-subnet-name"
 
         CreateGKEProperties:
             type: object
