@@ -18,4 +18,5 @@ type NodePoolsAzure struct {
 	MaxCount     int32             `json:"maxCount,omitempty"`
 	InstanceType string            `json:"instanceType"`
 	Labels       map[string]string `json:"labels,omitempty"`
+	VnetSubnetID string            `json:"vnetSubnetID,omitempty"`
 }

@@ -5971,6 +5971,9 @@ components:
             example: '{"example.io/label1":"value1"}'
             type: string
           type: object
+        vnetSubnetID:
+          example: /subscriptions/12345678-1234-5678-1234-123456789abc/resourceGroups/your-resource-group-name/providers/Microsoft.Network/virtualNetworks/your-vnet-name/subnets/your-vnet-subnet-name
+          type: string
       required:
       - count
       - instanceType
@@ -9773,9 +9776,6 @@ components:
           additionalProperties:
             $ref: '#/components/schemas/NodePoolsAzure'
           type: object
-        vnetSubnetID:
-          example: /subscriptions/12345678-1234-5678-1234-123456789abc/resourceGroups/your-resource-group-name/providers/Microsoft.Network/virtualNetworks/your-vnet-name/subnets/your-vnet-subnet-name
-          type: string
       required:
       - kubernetesVersion
       - nodePools
