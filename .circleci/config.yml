@@ -26,6 +26,13 @@ commands:
                 run:
                     name: Download Go module cache
                     command: go mod download
+    make_config:
+        description: Make config.toml
+        steps:
+            -
+                run:
+                    name: Create config
+                    command: make config/config.toml
 
 jobs:
     build:
@@ -95,16 +102,57 @@ jobs:
                 environment:
                     SKIP_SETCAP: true
                     VAULT_DEV_ROOT_TOKEN_ID: 227e1cce-6bf7-30bb-2d2a-acc854318caf
+        parallelism: 2
         steps:
             - checkout
             - restore_go_module_cache
             - download_go_modules
+            - make_config
             -
                 run:
                     name: Run tests
+                    environment:
+                        VAULT_ADDR: http://localhost:8200
+                        VAULT_TOKEN: 227e1cce-6bf7-30bb-2d2a-acc854318caf
                     command: |
-                        make config/config.toml
-                        PIPELINE_CONFIG_DIR=$PWD/config GOARGS="-p=2" make test
+                        PIPELINE_CONFIG_DIR=$PWD/config \
+                        GOARGS="-p=2" \
+                        TEST_PKGS=$(echo `go list ./... | circleci tests split --split-by=timings`) \
+                        TEST_REPORT_NAME=results_${CIRCLE_NODE_INDEX}.xml \
+                        make test
+            -
+                store_test_results:
+                    path: build/test_results/
+            -
+                store_artifacts:
+                    path: build/
+
+    integration-tests:
+        docker:
+            -
+                image: circleci/golang:1.12
+                environment:
+                    GOFLAG: -mod=readonly
+            -
+                image: vault:0.11.5
+                environment:
+                    SKIP_SETCAP: true
+                    VAULT_DEV_ROOT_TOKEN_ID: 227e1cce-6bf7-30bb-2d2a-acc854318caf
+        parallelism: 2
+        steps:
+            - checkout
+            - restore_go_module_cache
+            - download_go_modules
+            - make_config
+            -
+                run:
+                    name: Run integration tests
+                    command: |
+                        TEST_PKGS=$(echo `go list ./... | circleci tests split --split-by=timings`) \
+                        TEST_REPORT_NAME=results_${CIRCLE_NODE_INDEX}.xml \
+                        PIPELINE_CONFIG_DIR=$PWD/config \
+                        GOARGS="-p=2" \
+                        make test-integration
                     environment:
                         VAULT_ADDR: http://localhost:8200
                         VAULT_TOKEN: 227e1cce-6bf7-30bb-2d2a-acc854318caf
@@ -114,8 +162,7 @@ jobs:
             -
                 store_artifacts:
                     path: build/
-
-    integration-tests:
+    db-tests:
         docker:
             -
                 image: circleci/golang:1.12
@@ -137,17 +184,14 @@ jobs:
             - download_go_modules
             -
                 run:
-                    name: Run integration tests
-                    command: |
-                        make config/config.toml
-                        PIPELINE_CONFIG_DIR=$PWD/config make GOARGS="-p=2" test-integration
-                    environment:
-                        VAULT_ADDR: http://localhost:8200
-                        VAULT_TOKEN: 227e1cce-6bf7-30bb-2d2a-acc854318caf
-            -
-                run:
                     name: Install test dependencies
                     command: sudo apt-get install -y mysql-client mysql-utilities
+            -
+                run:
+                    name: Wait for MySQL
+                    command: |
+                        timeout 60 sh -c 'until nc -z 127.0.0.1 3306; do sleep 1; done'
+            - make_config
             -
                 run:
                     name: Create databases
@@ -191,12 +235,6 @@ jobs:
                 run:
                     name: Test database schema diff again
                     command: mysqldiff --skip-table-options --server1=root:@127.0.0.1:3306 --server2=root:@127.0.0.1:3306 pipeline_migrations:pipeline_automigrate
-            -
-                store_test_results:
-                    path: build/test_results/
-            -
-                store_artifacts:
-                    path: build/
 
 workflows:
     version: 2
@@ -206,3 +244,4 @@ workflows:
             - static-checks
             - integration-tests
             - unit-tests
+            - db-tests
