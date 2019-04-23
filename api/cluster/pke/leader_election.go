@@ -145,3 +145,16 @@ func isLeaderSet(err error) bool {
 
 	return false
 }
+
+func isLeaderNotFound(err error) bool {
+	type leaderNotFounder interface {
+		LeaderNotFound() bool
+	}
+
+	err = errors.Cause(err)
+	if e, ok := err.(leaderNotFounder); ok {
+		return e.LeaderNotFound()
+	}
+
+	return false
+}

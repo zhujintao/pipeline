@@ -135,3 +135,15 @@ func (leaderSetError) Error() string {
 func (leaderSetError) LeaderSet() bool {
 	return true
 }
+
+type leaderNotFound struct {
+	path string
+}
+
+func (e leaderNotFound) Error() string {
+	return fmt.Sprintf("No leader found with path %s", e.path)
+}
+
+func (leaderNotFound) LeaderNotFound() bool {
+	return true
+}

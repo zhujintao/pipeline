@@ -41,6 +41,7 @@ import (
 	"github.com/banzaicloud/pipeline/cluster"
 	"github.com/banzaicloud/pipeline/config"
 	"github.com/banzaicloud/pipeline/dns"
+	arkClusterManager "github.com/banzaicloud/pipeline/internal/ark/clustermanager"
 	arkEvents "github.com/banzaicloud/pipeline/internal/ark/events"
 	arkSync "github.com/banzaicloud/pipeline/internal/ark/sync"
 	"github.com/banzaicloud/pipeline/internal/audit"
@@ -56,6 +57,8 @@ import (
 	"github.com/banzaicloud/pipeline/internal/platform/gin/correlationid"
 	ginlog "github.com/banzaicloud/pipeline/internal/platform/gin/log"
 	platformlog "github.com/banzaicloud/pipeline/internal/platform/log"
+	azurePKEAdapter "github.com/banzaicloud/pipeline/internal/providers/azure/pke/adapter"
+	azurePKEDriver "github.com/banzaicloud/pipeline/internal/providers/azure/pke/driver"
 	"github.com/banzaicloud/pipeline/model/defaults"
 	"github.com/banzaicloud/pipeline/pkg/k8sclient"
 	"github.com/banzaicloud/pipeline/pkg/providers"
@@ -238,7 +241,15 @@ func main() {
 		go monitor.NewSpotMetricsExporter(context.Background(), clusterManager, log.WithField("subsystem", "spot-metrics-exporter")).Run(viper.GetDuration(config.SpotMetricsCollectionInterval))
 	}
 
-	clusterAPI := api.NewClusterAPI(clusterManager, clusterGetter, workflowClient, log, errorHandler, externalBaseURL)
+	clusterAPI := api.NewClusterAPI(clusterManager, clusterGetter, workflowClient, log, errorHandler, externalBaseURL, api.ClusterCreators{
+		PKEOnAzure: azurePKEDriver.NewAzurePKEClusterCreator(
+			log,
+			azurePKEAdapter.NewGORMAzurePKEClusterStore(db),
+			workflowClient,
+		),
+	})
+
+	nplsApi := api.NewNodepoolManagerAPI(clusterGetter, log, errorHandler)
 
 	//Initialise Gin router
 	router := gin.New()
@@ -356,7 +367,7 @@ func main() {
 			orgs.GET("/:orgid/spotguides/:owner/:name/icon", spotguideAPI.GetSpotguideIcon)
 
 			orgs.GET("/:orgid/domain", domainAPI.GetDomain)
-			orgs.POST("/:orgid/clusters", clusterAPI.CreateClusterRequest)
+			orgs.POST("/:orgid/clusters", clusterAPI.CreateCluster)
 			//v1.GET("/status", api.Status)
 			orgs.GET("/:orgid/clusters", clusterAPI.GetClusters)
 			orgs.GET("/:orgid/clusters/:id", clusterAPI.GetCluster)
@@ -410,8 +421,8 @@ func main() {
 
 			clusters := orgs.Group("/:orgid/clusters/:id")
 
-			clusters.GET("/nodepools/labels", api.GetNodepoolLabelSets)
-			clusters.POST("/nodepools/labels", api.SetNodepoolLabelSets)
+			clusters.GET("/nodepools/labels", nplsApi.GetNodepoolLabelSets)
+			clusters.POST("/nodepools/labels", nplsApi.SetNodepoolLabelSets)
 
 			namespaceAPI := namespace.NewAPI(clusterGetter, errorHandler)
 			namespaceAPI.RegisterRoutes(clusters.Group("/namespaces/:namespace"))
@@ -508,15 +519,15 @@ func main() {
 		restores.AddRoutes(orgs.Group("/:orgid/clusters/:id/restores"))
 		schedules.AddRoutes(orgs.Group("/:orgid/clusters/:id/schedules"))
 		buckets.AddRoutes(orgs.Group("/:orgid/backupbuckets"))
-		backups.AddOrgRoutes(orgs.Group("/:orgid/backups"))
+		backups.AddOrgRoutes(orgs.Group("/:orgid/backups"), clusterManager)
 	}
 
+	arkEvents.NewClusterEventHandler(arkEvents.NewClusterEvents(clusterEventBus), config.DB(), logger)
 	if viper.GetBool(config.ARKSyncEnabled) {
-		arkEvents.NewClusterEventHandler(arkEvents.NewClusterEvents(clusterEventBus), config.DB(), logger)
 		go arkSync.RunSyncServices(
 			context.Background(),
 			config.DB(),
-			clusterManager,
+			arkClusterManager.New(clusterManager),
 			platformlog.NewLogger(platformlog.Config{
 				Level:  viper.GetString(config.ARKLogLevel),
 				Format: viper.GetString(config.LoggingLogFormat),

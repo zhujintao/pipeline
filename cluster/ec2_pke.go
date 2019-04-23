@@ -27,7 +27,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	pipConfig "github.com/banzaicloud/pipeline/config"
 	"github.com/banzaicloud/pipeline/internal/cluster"
@@ -378,11 +377,6 @@ func (c *EC2ClusterPKE) RegisterNode(name, nodePoolName, ip string, master, work
 	c.log.WithField("node", name).Info("node registered")
 	*/
 
-	return nil
-}
-
-// Create master CF template
-func CreateMasterCF(formation *cloudformation.CloudFormation) error {
 	return nil
 }
 
@@ -778,20 +772,26 @@ func (c *EC2ClusterPKE) GetPipelineToken(tokenGenerator interface{}) (string, er
 // GetBootstrapCommand returns a command line to use to install a node in the given nodepool
 func (c *EC2ClusterPKE) GetBootstrapCommand(nodePoolName, url, token string) (string, error) {
 	subcommand := "worker"
-	var np internalPke.NodePool
-outerLoop:
-	for _, np = range c.model.NodePools {
-		if np.Name == nodePoolName {
-			for _, role := range np.Roles {
-				if role == internalPke.RoleMaster {
-					subcommand = "master"
-					break outerLoop
-				}
-			}
+	var np *internalPke.NodePool
+	for _, nodePool := range c.model.NodePools {
+		if nodePool.Name == nodePoolName {
+			np = &nodePool
+			break
+		}
+	}
+
+	if np == nil {
+		return "", errors.New(fmt.Sprintf("can't find nodepool %q", nodePoolName))
+	}
+
+	for _, role := range np.Roles {
+		if role == internalPke.RoleMaster {
+			subcommand = "master"
+			break
 		}
 	}
 	if nodePoolName == "master" {
-		subcommand = "master"
+		subcommand = "master" // TODO remove this if not needed anymore
 	}
 
 	providerConfig := internalPke.NodePoolProviderConfigAmazon{}
