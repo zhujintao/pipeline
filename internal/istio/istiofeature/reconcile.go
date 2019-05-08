@@ -33,6 +33,7 @@ func (m *MeshReconciler) Reconcile() error {
 			m.ReconcileIstioOperator,
 			m.ReconcileIstio,
 			m.ReconcileRemoteIstios,
+			m.ReconcileUistio,
 		}
 	case DesiredStateAbsent:
 		reconcilers = []Reconciler{
@@ -41,6 +42,7 @@ func (m *MeshReconciler) Reconcile() error {
 			m.ReconcileRemoteIstios,
 			m.ReconcileIstio,
 			m.ReconcileIstioOperator,
+			m.ReconcileUistio,
 		}
 	}
 

@@ -144,6 +144,9 @@ const (
 	IstioOperatorChartVersion     = "servicemesh.istioOperatorChartVersion"
 	IstioGrafanaDashboardLocation = "servicemesh.grafanaDashboardLocation"
 
+	UistioChartVersion = "uistio.chartVersion"
+	UistioChartName    = "uistio.chartName"
+
 	// NodePool LabelSet Operator
 	NodePoolLabelSetOperatorChartVersion = "nodepools.labelSetOperatorChartVersion"
 
@@ -285,6 +288,9 @@ func init() {
 
 	viper.SetDefault(IstioOperatorChartVersion, "0.0.6")
 	viper.SetDefault(IstioGrafanaDashboardLocation, filepath.Join(pwd, "etc", "dashboards", "istio"))
+
+	viper.SetDefault(UistioChartVersion, "0.0.1")
+	viper.SetDefault(UistioChartName, "uistio")
 
 	viper.SetDefault(NodePoolLabelSetOperatorChartVersion, "0.0.2")
 
