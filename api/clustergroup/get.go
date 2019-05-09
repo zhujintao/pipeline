@@ -1,4 +1,4 @@
-// Copyright © 2018 Banzai Cloud
+// Copyright © 2019 Banzai Cloud
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,35 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package api
+package clustergroup
 
 import (
+	"context"
 	"net/http"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/gin-gonic/gin"
+
+	ginutils "github.com/banzaicloud/pipeline/internal/platform/gin/utils"
 )
 
-func TestBucketNotFoundResponseCode(t *testing.T) {
+func (a *API) Get(c *gin.Context) {
+	ctx := ginutils.Context(context.Background(), c)
 
-	tests := []struct {
-		name   string
-		errMsg string
-		code   int
-	}{
-		{
-			name:   "response code should be 404",
-			errMsg: "not found",
-			code:   http.StatusNotFound,
-		},
+	cgId, ok := ginutils.UintParam(c, "id")
+	if !ok {
+		return
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			nfe := BucketNotFoundError{errMessage: test.errMsg}
-			er := ErrorResponseFrom(nfe)
 
-			assert.Equal(t, er.Code, test.code)
-			assert.Equal(t, er.Message, test.errMsg)
-		})
+	response, err := a.clusterGroupManager.GetClusterGroupByIDWithStatus(ctx, cgId, true)
+	if err != nil {
+		a.errorHandler.Handle(c, err)
+		return
 	}
+
+	c.JSON(http.StatusOK, response)
 }

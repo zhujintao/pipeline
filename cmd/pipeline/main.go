@@ -23,6 +23,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/banzaicloud/pipeline/internal/clustergroup/deployment"
+	"github.com/banzaicloud/pipeline/internal/federation"
+
+	"github.com/banzaicloud/pipeline/internal/clustergroup"
+
 	evbus "github.com/asaskevich/EventBus"
 	ginprometheus "github.com/banzaicloud/go-gin-prometheus"
 	"github.com/banzaicloud/pipeline/api"
@@ -33,6 +38,7 @@ import (
 	"github.com/banzaicloud/pipeline/api/ark/schedules"
 	"github.com/banzaicloud/pipeline/api/cluster/namespace"
 	"github.com/banzaicloud/pipeline/api/cluster/pke"
+	cgroupAPI "github.com/banzaicloud/pipeline/api/clustergroup"
 	"github.com/banzaicloud/pipeline/api/common"
 	"github.com/banzaicloud/pipeline/api/middleware"
 	"github.com/banzaicloud/pipeline/auth"
@@ -49,6 +55,7 @@ import (
 	"github.com/banzaicloud/pipeline/internal/cluster/clustersecret"
 	"github.com/banzaicloud/pipeline/internal/cluster/clustersecret/clustersecretadapter"
 	prometheusMetrics "github.com/banzaicloud/pipeline/internal/cluster/metrics/adapters/prometheus"
+	cgroupAdapter "github.com/banzaicloud/pipeline/internal/clustergroup/adapter"
 	"github.com/banzaicloud/pipeline/internal/dashboard"
 	"github.com/banzaicloud/pipeline/internal/monitor"
 	"github.com/banzaicloud/pipeline/internal/notification"
@@ -257,6 +264,13 @@ func main() {
 	}
 	clusterAPI := api.NewClusterAPI(clusterManager, clusterGetter, workflowClient, log, errorHandler, externalBaseURL, clusterCreators, clusterDeleters)
 
+	cgroupAdapter := cgroupAdapter.NewClusterGetter(clusterManager)
+	clusterGroupManager := clustergroup.NewManager(cgroupAdapter, clustergroup.NewClusterGroupRepository(db, log), log, errorHandler)
+	federationHandler := federation.NewFederationHandler(log, errorHandler)
+	deploymentManager := deployment.NewCGDeploymentManager(db, cgroupAdapter, log, errorHandler)
+	clusterGroupManager.RegisterFeatureHandler(federation.FeatureName, federationHandler)
+	clusterGroupManager.RegisterFeatureHandler(deployment.FeatureName, deploymentManager)
+
 	nplsApi := api.NewNodepoolManagerAPI(clusterGetter, log, errorHandler)
 
 	//Initialise Gin router
@@ -428,6 +442,11 @@ func main() {
 				orgs.GET("/:orgid/clusters/:id/imagescan/:imagedigest", api.GetScanResult)
 				orgs.GET("/:orgid/clusters/:id/imagescan/:imagedigest/vuln", api.GetImageVulnerabilities)
 			}
+
+			// ClusterGroupAPI
+			cgroupsAPI := cgroupAPI.NewAPI(clusterGroupManager, deploymentManager, log, errorHandler)
+			cgroupsAPI.AddRoutes(orgs.Group("/:orgid/clustergroups"))
+
 			clusters := orgs.Group("/:orgid/clusters/:id")
 
 			clusters.GET("/nodepools/labels", nplsApi.GetNodepoolLabelSets)

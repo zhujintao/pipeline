@@ -1,4 +1,4 @@
-// Copyright © 2018 Banzai Cloud
+// Copyright © 2019 Banzai Cloud
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,32 +15,12 @@
 package api
 
 import (
-	"net/http"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"context"
 )
 
-func TestBucketNotFoundResponseCode(t *testing.T) {
-
-	tests := []struct {
-		name   string
-		errMsg string
-		code   int
-	}{
-		{
-			name:   "response code should be 404",
-			errMsg: "not found",
-			code:   http.StatusNotFound,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			nfe := BucketNotFoundError{errMessage: test.errMsg}
-			er := ErrorResponseFrom(nfe)
-
-			assert.Equal(t, er.Code, test.code)
-			assert.Equal(t, er.Message, test.errMsg)
-		})
-	}
+// ClusterGetter
+type ClusterGetter interface {
+	GetClusterByIDOnly(ctx context.Context, clusterID uint) (Cluster, error)
+	GetClusterByID(ctx context.Context, organizationID uint, clusterID uint) (Cluster, error)
+	GetClusterByName(ctx context.Context, organizationID uint, clusterName string) (Cluster, error)
 }
