@@ -19,19 +19,21 @@ type FeatureRequest interface{}
 
 // FeatureResponse
 type FeatureResponse struct {
-	Name         string          `json:"name"`
-	ClusterGroup ClusterGroup    `json:"clusterGroup"`
-	Enabled      bool            `json:"enabled"`
-	Properties   FeatureRequest  `json:"properties,omitempty" yaml:"properties"`
-	Status       map[uint]string `json:"status,omitempty" yaml:"status"`
+	Name               string          `json:"name"`
+	ClusterGroup       ClusterGroup    `json:"clusterGroup"`
+	Enabled            bool            `json:"enabled"`
+	Properties         FeatureRequest  `json:"properties,omitempty" yaml:"properties"`
+	Status             map[uint]string `json:"status,omitempty" yaml:"status"`
+	LastReconcileError string          `json:"lastReconcileError,omitempty" yaml:"lastReconcileError"`
 }
 
 // Feature
 type Feature struct {
-	Name         string       `json:"name"`
-	ClusterGroup ClusterGroup `json:"clusterGroup"`
-	Enabled      bool         `json:"enabled"`
-	Properties   interface{}  `json:"properties"`
+	Name               string       `json:"name"`
+	ClusterGroup       ClusterGroup `json:"clusterGroup"`
+	Enabled            bool         `json:"enabled"`
+	Properties         interface{}  `json:"properties"`
+	LastReconcileError string       `json:"lastReconcileError"`
 }
 
 type FeatureHandler interface {

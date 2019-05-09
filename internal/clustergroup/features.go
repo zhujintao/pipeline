@@ -65,19 +65,33 @@ func (g *Manager) GetEnabledFeatures(clusterGroup api.ClusterGroup) (map[string]
 func (g *Manager) ReconcileFeatures(clusterGroup api.ClusterGroup, onlyEnabledHandlers bool) error {
 	g.logger.Debugf("reconcile features for group: %s", clusterGroup.Name)
 
-	features, err := g.GetFeatures(clusterGroup)
+	features, err := g.cgRepo.GetAllFeatures(clusterGroup.Id)
 	if err != nil {
-		return err
+		if IsRecordNotFoundError(err) {
+			return nil
+		}
+		return emperror.With(err,
+			"clusterGroupId", clusterGroup.Id,
+		)
 	}
 
-	for name, feature := range features {
-		if feature.Enabled || !onlyEnabledHandlers {
-			handler := g.featureHandlerMap[name]
+	for _, featureModel := range features {
+		if featureModel.Enabled || !onlyEnabledHandlers {
+			handler := g.featureHandlerMap[featureModel.Name]
 			if handler == nil {
-				g.logger.Debugf("no handler registered for cluster group feature %s", name)
+				g.logger.Debugf("no handler registered for cluster group feature %s", featureModel.Name)
 				continue
 			}
-			handler.ReconcileState(feature)
+			feature, err := g.getFeatureFromModel(clusterGroup, &featureModel)
+			if err != nil {
+				g.logger.Error(emperror.Wrap(err, "error reading cluster group feature model").Error())
+				continue
+			}
+			err = handler.ReconcileState(*feature)
+			if err != nil {
+				featureModel.LastReconcileError = err.Error()
+				g.cgRepo.SaveFeature(&featureModel)
+			}
 		}
 	}
 
@@ -120,22 +134,30 @@ func (g *Manager) GetFeatures(clusterGroup api.ClusterGroup) (map[string]api.Fea
 	}
 
 	for _, r := range results {
-		var featureProperties interface{}
-		if r.Properties != nil {
-			err := json.Unmarshal(r.Properties, &featureProperties)
-			if err != nil {
-				g.errorHandler.Handle(err)
-			}
+		feature, err := g.getFeatureFromModel(clusterGroup, &r)
+		if err != nil {
+			g.logger.Error(emperror.Wrap(err, "error reading cluster group feature model").Error())
+			continue
 		}
-		features[r.Name] = api.Feature{
-			Name:         r.Name,
-			Enabled:      r.Enabled,
-			ClusterGroup: clusterGroup,
-			Properties:   featureProperties,
-		}
+		features[r.Name] = *feature
 	}
 
 	return features, nil
+}
+
+func (g *Manager) getFeatureFromModel(clusterGroup api.ClusterGroup, model *ClusterGroupFeatureModel) (*api.Feature, error) {
+	var featureProperties interface{}
+	err := json.Unmarshal(model.Properties, &featureProperties)
+	if err != nil {
+		return nil, emperror.Wrap(err, "could not unmarshal feature properties")
+	}
+	return &api.Feature{
+		ClusterGroup:       clusterGroup,
+		Properties:         featureProperties,
+		Name:               model.Name,
+		Enabled:            model.Enabled,
+		LastReconcileError: model.LastReconcileError,
+	}, nil
 }
 
 // GetFeature returns params of a cluster group feature by clusterGroupId and feature name
@@ -147,19 +169,10 @@ func (g *Manager) GetFeature(clusterGroup api.ClusterGroup, featureName string) 
 			"featureName", featureName,
 		)
 	}
-
-	var featureProperties interface{}
-	err = json.Unmarshal(result.Properties, &featureProperties)
+	feature, err := g.getFeatureFromModel(clusterGroup, result)
 	if err != nil {
-		return nil, emperror.Wrap(err, "could not unmarshal feature properties")
+		return nil, err
 	}
-	feature := &api.Feature{
-		ClusterGroup: clusterGroup,
-		Properties:   featureProperties,
-		Name:         featureName,
-		Enabled:      result.Enabled,
-	}
-
 	return feature, nil
 }
 

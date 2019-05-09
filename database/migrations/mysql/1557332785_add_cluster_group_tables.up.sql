@@ -49,6 +49,7 @@ CREATE TABLE `clustergroup_features` (
   `cluster_group_id` int(10) unsigned DEFAULT NULL,
   `enabled` tinyint(1) DEFAULT NULL,
   `properties` json DEFAULT NULL,
+  `last_reconcile_error` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -54,11 +54,12 @@ type MemberClusterModel struct {
 
 // ClusterGroupFeature describes a feature of a cluster group.
 type ClusterGroupFeatureModel struct {
-	ID             uint `gorm:"primary_key"`
-	Name           string
-	ClusterGroupID uint
-	Enabled        bool
-	Properties     []byte `sql:"type:json"`
+	ID                 uint `gorm:"primary_key"`
+	Name               string
+	ClusterGroupID     uint
+	Enabled            bool
+	Properties         []byte `sql:"type:json"`
+	LastReconcileError string
 }
 
 // TableName changes the default table name.
