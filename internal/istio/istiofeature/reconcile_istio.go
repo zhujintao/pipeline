@@ -40,24 +40,36 @@ func (m *MeshReconciler) ReconcileIstio(desiredState DesiredState) error {
 	}
 
 	if desiredState == DesiredStatePresent {
-		_, err := client.IstioV1beta1().Istios(istioOperatorNamespace).Get(m.Configuration.name, metav1.GetOptions{})
-		if err != nil && !k8serrors.IsNotFound(err) {
-			return emperror.Wrap(err, "could not check existance Istio CR")
-		}
-
-		if err == nil {
-			m.logger.Debug("Istio CR already exists")
-			return nil
-		}
-
 		ipRanges, err := m.Master.GetK8sIpv4Cidrs()
 		if err != nil {
 			return emperror.Wrap(err, "could not get ipv4 ranges for cluster")
 		}
-		istioCR := m.generateIstioCR(m.Configuration, ipRanges)
-		_, err = client.IstioV1beta1().Istios(istioOperatorNamespace).Create(&istioCR)
-		if err != nil {
-			return emperror.Wrap(err, "could not create Istio CR")
+
+		istio, err := client.IstioV1beta1().Istios(istioOperatorNamespace).Get(m.Configuration.name, metav1.GetOptions{})
+		if err != nil && !k8serrors.IsNotFound(err) {
+			return emperror.Wrap(err, "could not check existance Istio CR")
+		}
+
+		if k8serrors.IsNotFound(err) {
+			istio = &v1beta1.Istio{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: m.Configuration.name,
+				},
+			}
+		}
+
+		istio = m.configureIstioCR(istio, m.Configuration, ipRanges)
+
+		if k8serrors.IsNotFound(err) {
+			_, err = client.IstioV1beta1().Istios(istioOperatorNamespace).Create(istio)
+			if err != nil {
+				return emperror.Wrap(err, "could not create Istio CR")
+			}
+		} else if err == nil {
+			_, err := client.IstioV1beta1().Istios(istioOperatorNamespace).Update(istio)
+			if err != nil {
+				return emperror.Wrap(err, "could not update Istio CR")
+			}
 		}
 	} else {
 		err := client.IstioV1beta1().Istios(istioOperatorNamespace).Delete(m.Configuration.name, &metav1.DeleteOptions{})
@@ -100,42 +112,38 @@ func (m *MeshReconciler) waitForIstioCRToBeDeleted(client *istiooperatorclientse
 	return nil
 }
 
-// generateIstioCR generates istio-operator specific CR based on the given params
-func (m *MeshReconciler) generateIstioCR(config Config, ipRanges *pkgCluster.Ipv4Cidrs) v1beta1.Istio {
-	istioConfig := v1beta1.Istio{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: m.Configuration.name,
-			Labels: map[string]string{
-				"controller-tools.k8s.io":              "1.0",
-				"cluster.banzaicloud.com/id":           strconv.FormatUint(uint64(m.Master.GetID()), 10),
-				"cluster.banzaicloud.com/cloud":        m.Master.GetCloud(),
-				"cluster.banzaicloud.com/distribution": m.Master.GetDistribution(),
-			},
-		},
-		Spec: v1beta1.IstioSpec{
-			MTLS:                    config.EnableMTLS,
-			AutoInjectionNamespaces: config.AutoSidecarInjectNamespaces,
-			Version:                 istioVersion,
-			Pilot: v1beta1.PilotConfiguration{
-				Image: "waynz0r/pilot:latest",
-			},
-			Mixer: v1beta1.MixerConfiguration{
-				Image: "waynz0r/mixer:latest",
-			},
-		},
+// configureIstioCR configures istio-operator specific CR based on the given params
+func (m *MeshReconciler) configureIstioCR(istio *v1beta1.Istio, config Config, ipRanges *pkgCluster.Ipv4Cidrs) *v1beta1.Istio {
+	labels := istio.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string, 0)
+	}
+	labels["controller-tools.k8s.io"] = "1.0"
+	labels["cluster.banzaicloud.com/id"] = strconv.FormatUint(uint64(m.Master.GetID()), 10)
+	labels["cluster.banzaicloud.com/cloud"] = m.Master.GetCloud()
+	labels["cluster.banzaicloud.com/distribution"] = m.Master.GetDistribution()
+	istio.SetLabels(labels)
+	istio.Spec.MTLS = config.EnableMTLS
+	istio.Spec.AutoInjectionNamespaces = config.AutoSidecarInjectNamespaces
+	istio.Spec.Version = istioVersion
+	istio.Spec.Pilot = v1beta1.PilotConfiguration{
+		Image: "waynz0r/pilot:latest",
+	}
+	istio.Spec.Mixer = v1beta1.MixerConfiguration{
+		Image: "waynz0r/mixer:latest",
 	}
 
 	if len(m.Remotes) > 0 {
 		enabled := true
-		istioConfig.Spec.UseMCP = enabled
-		istioConfig.Spec.MTLS = enabled
-		istioConfig.Spec.MeshExpansion = &enabled
-		istioConfig.Spec.ControlPlaneSecurityEnabled = enabled
+		istio.Spec.UseMCP = enabled
+		istio.Spec.MTLS = enabled
+		istio.Spec.MeshExpansion = &enabled
+		istio.Spec.ControlPlaneSecurityEnabled = enabled
 	}
 
 	if config.BypassEgressTraffic {
-		istioConfig.Spec.IncludeIPRanges = strings.Join(ipRanges.PodIPRanges, ",") + "," + strings.Join(ipRanges.ServiceClusterIPRanges, ",")
+		istio.Spec.IncludeIPRanges = strings.Join(ipRanges.PodIPRanges, ",") + "," + strings.Join(ipRanges.ServiceClusterIPRanges, ",")
 	}
 
-	return istioConfig
+	return istio
 }

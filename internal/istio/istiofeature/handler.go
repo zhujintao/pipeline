@@ -102,15 +102,25 @@ func (h *ServiceMeshFeatureHandler) ValidateState(featureState api.Feature) erro
 	return nil
 }
 
-func (h *ServiceMeshFeatureHandler) ValidateProperties(clusterGroup api.ClusterGroup, properties interface{}) error {
-	var config Config
-	err := mapstructure.Decode(properties, &config)
+func (h *ServiceMeshFeatureHandler) ValidateProperties(clusterGroup api.ClusterGroup, currentProperties, properties interface{}) error {
+	var currentConfig Config
+	err := mapstructure.Decode(currentProperties, &currentConfig)
 	if err != nil {
-		return emperror.Wrap(err, "could not decode properties into config")
+		return emperror.Wrap(err, "could not decode current properties into config")
+	}
+
+	var config Config
+	err = mapstructure.Decode(properties, &config)
+	if err != nil {
+		return emperror.Wrap(err, "could not decode new properties into config")
 	}
 
 	if config.MasterClusterID == 0 {
 		return errors.New("master cluster ID is required")
+	}
+
+	if currentConfig.MasterClusterID > 0 && config.MasterClusterID != currentConfig.MasterClusterID {
+		return errors.New("master cluster ID cannot be changed")
 	}
 
 	masterClusterIsAMember := false
