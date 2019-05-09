@@ -147,9 +147,11 @@ func (g *Manager) GetFeatures(clusterGroup api.ClusterGroup) (map[string]api.Fea
 
 func (g *Manager) getFeatureFromModel(clusterGroup api.ClusterGroup, model *ClusterGroupFeatureModel) (*api.Feature, error) {
 	var featureProperties interface{}
-	err := json.Unmarshal(model.Properties, &featureProperties)
-	if err != nil {
-		return nil, emperror.Wrap(err, "could not unmarshal feature properties")
+	if model.Properties != nil {
+		err := json.Unmarshal(model.Properties, &featureProperties)
+		if err != nil {
+			return nil, emperror.Wrap(err, "could not unmarshal feature properties")
+		}
 	}
 	return &api.Feature{
 		ClusterGroup:       clusterGroup,
@@ -234,11 +236,6 @@ func (g *Manager) setFeatureParams(featureName string, clusterGroup *api.Cluster
 		return emperror.Wrap(err, "could not get feature handler")
 	}
 
-	err = handler.ValidateProperties(*clusterGroup, properties)
-	if err != nil {
-		return emperror.Wrap(err, "invalid properties")
-	}
-
 	result, err := g.cgRepo.GetFeature(clusterGroup.Id, featureName)
 	if IsFeatureRecordNotFoundError(err) {
 		result = &ClusterGroupFeatureModel{
@@ -252,10 +249,23 @@ func (g *Manager) setFeatureParams(featureName string, clusterGroup *api.Cluster
 		)
 	}
 
+	var currentProperties interface{}
+	if result.Properties != nil {
+		err = json.Unmarshal(result.Properties, &currentProperties)
+		if err != nil {
+			return emperror.Wrap(err, "could not marshal current feature properties")
+		}
+	}
+
 	result.Enabled = true
 	result.Properties, err = json.Marshal(properties)
 	if err != nil {
-		return emperror.Wrap(err, "could not marshal feature properties")
+		return emperror.Wrap(err, "could not marshal new feature properties")
+	}
+
+	err = handler.ValidateProperties(*clusterGroup, currentProperties, properties)
+	if err != nil {
+		return emperror.Wrap(err, "invalid properties")
 	}
 
 	err = g.cgRepo.SaveFeature(result)
