@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "8239d6f1-08a8-4cf9-b66f-8715abf9215e",
+		"_postman_id": "61a3735f-f514-4d8c-b584-9255d6ef2a72",
 		"name": "End2End TEST Organizations",
 		"description": "Collection for K8S Cluster CRUD operations through the Banzai Cloud Pipeline API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -3346,7 +3346,7 @@
 								}
 							],
 							"request": {
-								"method": "POST",
+								"method": "PUT",
 								"header": [
 									{
 										"key": "Content-Type",
