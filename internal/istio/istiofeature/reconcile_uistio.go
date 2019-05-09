@@ -15,12 +15,17 @@
 package istiofeature
 
 import (
+	"time"
+
 	"github.com/goph/emperror"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/banzaicloud/pipeline/cluster"
 	pConfig "github.com/banzaicloud/pipeline/config"
+	"github.com/banzaicloud/pipeline/internal/backoff"
 	pkgHelm "github.com/banzaicloud/pipeline/pkg/helm"
 )
 
@@ -33,7 +38,13 @@ func (m *MeshReconciler) ReconcileUistio(desiredState DesiredState) error {
 	defer m.logger.Debug("Uistio reconciled")
 
 	if desiredState == DesiredStatePresent {
-		err := m.installUistio(m.Master, m.logger)
+		c, _ := m.GetApiExtensionK8sClient(m.Master)
+		err := m.waitForMetricCRD("metrics.config.istio.io", c)
+		if err != nil {
+			return emperror.Wrap(err, "could not install Uistio")
+		}
+
+		err = m.installUistio(m.Master, m.logger)
 		if err != nil {
 			return emperror.Wrap(err, "could not install Uistio")
 		}
@@ -45,6 +56,30 @@ func (m *MeshReconciler) ReconcileUistio(desiredState DesiredState) error {
 	}
 
 	return nil
+}
+
+// waitForMetricCRD
+func (m *MeshReconciler) waitForMetricCRD(name string, client *apiextensionsclient.Clientset) error {
+	m.logger.WithField("name", name).Debug("waiting for metric CRD")
+
+	var backoffConfig = backoff.ConstantBackoffConfig{
+		Delay:      time.Duration(backoffDelaySeconds) * time.Second,
+		MaxRetries: backoffMaxretries,
+	}
+	var backoffPolicy = backoff.NewConstantBackoffPolicy(&backoffConfig)
+
+	err := backoff.Retry(func() error {
+		c, err := m.GetApiExtensionK8sClient(m.Master)
+		if err != nil {
+			return err
+		}
+
+		_, err = c.ApiextensionsV1beta1().CustomResourceDefinitions().Get(name, metav1.GetOptions{})
+
+		return err
+	}, backoffPolicy)
+
+	return err
 }
 
 // uninstallIstioOperator removes istio-operator from a cluster

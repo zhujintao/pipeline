@@ -17,6 +17,7 @@ package istiofeature
 import (
 	"github.com/goph/emperror"
 	"github.com/sirupsen/logrus"
+	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/kubernetes"
 
 	istiooperatorclientset "github.com/banzaicloud/istio-operator/pkg/client/clientset/versioned"
@@ -78,6 +79,25 @@ func (m *MeshReconciler) GetIstioOperatorK8sClient(c cluster.CommonCluster) (*is
 	}
 
 	client, err := istiooperatorclientset.NewForConfig(config)
+	if err != nil {
+		return nil, emperror.Wrap(err, "could not create istio operator client")
+	}
+
+	return client, nil
+}
+
+func (m *MeshReconciler) GetApiExtensionK8sClient(c cluster.CommonCluster) (*apiextensionsclient.Clientset, error) {
+	kubeConfig, err := m.Master.GetK8sConfig()
+	if err != nil {
+		return nil, emperror.Wrap(err, "could not get k8s config")
+	}
+
+	config, err := k8sclient.NewClientConfig(kubeConfig)
+	if err != nil {
+		return nil, emperror.Wrap(err, "could not create rest config from kubeconfig")
+	}
+
+	client, err := apiextensionsclient.NewForConfig(config)
 	if err != nil {
 		return nil, emperror.Wrap(err, "could not create istio operator client")
 	}

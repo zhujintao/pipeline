@@ -27,6 +27,7 @@ func (m *MeshReconciler) Reconcile() error {
 	switch desiredState {
 	case DesiredStatePresent:
 		reconcilers = []Reconciler{
+			m.ReconcileNamespace,
 			m.ReconcileMonitoring,
 			m.ReconcilePrometheusScrapeConfig,
 			m.ReconcileGrafanaDashboards,
@@ -43,6 +44,7 @@ func (m *MeshReconciler) Reconcile() error {
 			m.ReconcileIstio,
 			m.ReconcileIstioOperator,
 			m.ReconcileUistio,
+			m.ReconcileNamespace,
 		}
 	}
 

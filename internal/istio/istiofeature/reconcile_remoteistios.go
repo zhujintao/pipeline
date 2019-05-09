@@ -20,6 +20,7 @@ import (
 	"strconv"
 
 	"github.com/goph/emperror"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -381,8 +382,8 @@ func (m *MeshReconciler) getRemoteClustersByExistingRemoteIstioCRs() (map[uint]c
 	}
 
 	remoteistios, err := client.IstioV1beta1().RemoteIstios(istioOperatorNamespace).List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
+	if err != nil && !k8serrors.IsNotFound(err) {
+		return nil, emperror.Wrap(err, "could not get remote istios")
 	}
 
 	for _, remoteistio := range remoteistios.Items {
@@ -397,13 +398,13 @@ func (m *MeshReconciler) getRemoteClustersByExistingRemoteIstioCRs() (map[uint]c
 
 		clusterID, err := strconv.ParseUint(cID, 10, 64)
 		if err != nil {
-			m.errorHandler.Handle(err)
+			m.errorHandler.Handle(errors.WithStack(err))
 			continue
 		}
 
 		c, err := m.clusterGetter.GetClusterByID(context.Background(), m.Master.GetOrganizationId(), uint(clusterID))
 		if err != nil {
-			m.errorHandler.Handle(err)
+			m.errorHandler.Handle(errors.WithStack(err))
 			continue
 		}
 

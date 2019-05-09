@@ -78,7 +78,7 @@ func (h *ServiceMeshFeatureHandler) GetConfigFromState(state api.Feature) (*Conf
 	var config Config
 	err := mapstructure.Decode(state.Properties, &config)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, emperror.Wrap(err, "could not decode properties into config")
 	}
 
 	config.name = state.ClusterGroup.Name
@@ -89,6 +89,16 @@ func (h *ServiceMeshFeatureHandler) GetConfigFromState(state api.Feature) (*Conf
 }
 
 func (h *ServiceMeshFeatureHandler) ValidateState(featureState api.Feature) error {
+	var config Config
+	err := mapstructure.Decode(featureState.Properties, &config)
+	if err != nil {
+		return emperror.Wrap(err, "could not decode properties into config")
+	}
+
+	if featureState.ClusterGroup.Clusters[config.MasterClusterID] == nil {
+		return errors.New("cluster with master role cannot be removed from the group")
+	}
+
 	return nil
 }
 
@@ -96,7 +106,7 @@ func (h *ServiceMeshFeatureHandler) ValidateProperties(clusterGroup api.ClusterG
 	var config Config
 	err := mapstructure.Decode(properties, &config)
 	if err != nil {
-		return errors.WithStack(err)
+		return emperror.Wrap(err, "could not decode properties into config")
 	}
 
 	if config.MasterClusterID == 0 {
@@ -119,8 +129,17 @@ func (h *ServiceMeshFeatureHandler) ValidateProperties(clusterGroup api.ClusterG
 
 func (h *ServiceMeshFeatureHandler) GetMembersStatus(featureState api.Feature) (map[uint]string, error) {
 	statusMap := make(map[uint]string, 0)
-	for _, memberCluster := range featureState.ClusterGroup.Clusters {
-		statusMap[memberCluster.GetID()] = "ready"
+
+	config, err := h.GetConfigFromState(featureState)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
+
+	mesh := NewMeshReconciler(*config, h.clusterGetter, h.logger, h.errorHandler)
+	statusMap, err = mesh.GetClusterStatus()
+	if err != nil {
+		return nil, emperror.Wrap(err, "could not get clusters status")
+	}
+
 	return statusMap, nil
 }
