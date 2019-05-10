@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/goph/emperror"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -86,12 +87,16 @@ func (m *MeshReconciler) waitForRemoteIstioCRToBeDeleted(name string, client *is
 	var backoffPolicy = backoff.NewConstantBackoffPolicy(&backoffConfig)
 
 	err := backoff.Retry(func() error {
-		_, err := client.IstioV1beta1().Istios(istioOperatorNamespace).Get(m.Configuration.name, metav1.GetOptions{})
+		_, err := client.IstioV1beta1().RemoteIstios(istioOperatorNamespace).Get(name, metav1.GetOptions{})
 		if k8serrors.IsNotFound(err) {
 			return nil
 		}
 
-		return emperror.WrapWith(err, "Remote Istio CR still exists", "name", name)
+		if err != nil {
+			return emperror.WrapWith(err, "could not check Remote Istio CR existance", "name", name)
+		}
+
+		return emperror.With(errors.New("Remote Istio CR still exists"), "name", name)
 	}, backoffPolicy)
 
 	return err

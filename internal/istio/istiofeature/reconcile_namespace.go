@@ -44,9 +44,14 @@ func (m *MeshReconciler) ReconcileNamespace(desiredState DesiredState) error {
 		}
 	} else {
 		_, err := client.CoreV1().Namespaces().Get(istioOperatorNamespace, metav1.GetOptions{})
-		if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return nil
+		}
+
+		if err != nil && !k8serrors.IsNotFound(err) {
 			return emperror.Wrap(err, "could not get namespace")
 		}
+
 		err = client.CoreV1().Namespaces().Delete(istioOperatorNamespace, &metav1.DeleteOptions{})
 		if err != nil {
 			return emperror.Wrap(err, "could not delete namespace")
