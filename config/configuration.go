@@ -143,6 +143,9 @@ const (
 
 	IstioOperatorChartVersion     = "servicemesh.istioOperatorChartVersion"
 	IstioGrafanaDashboardLocation = "servicemesh.grafanaDashboardLocation"
+	IstioOperatorChartName        = "servicemesh.istioOperatorChartName"
+	IstioPilotImage               = "servicemesh.istioPilotImage"
+	IstioMixerImage               = "servicemesh.istioMixerImage"
 
 	UistioChartVersion = "uistio.chartVersion"
 	UistioChartName    = "uistio.chartName"
@@ -286,10 +289,13 @@ func init() {
 
 	viper.SetDefault("gitlab.baseURL", "https://gitlab.com/")
 
-	viper.SetDefault(IstioOperatorChartVersion, "0.0.6")
+	viper.SetDefault(IstioOperatorChartVersion, "0.0.7")
 	viper.SetDefault(IstioGrafanaDashboardLocation, filepath.Join(pwd, "etc", "dashboards", "istio"))
+	viper.SetDefault(IstioOperatorChartName, "istio-operator")
+	viper.SetDefault(IstioPilotImage, "banzaicloud/istio-pilot:1.1.4-bzc")
+	viper.SetDefault(IstioMixerImage, "banzaicloud/istio-mixer:1.1.4-bzc")
 
-	viper.SetDefault(UistioChartVersion, "0.0.1")
+	viper.SetDefault(UistioChartVersion, "0.0.2")
 	viper.SetDefault(UistioChartName, "uistio")
 
 	viper.SetDefault(NodePoolLabelSetOperatorChartVersion, "0.0.2")

@@ -21,12 +21,14 @@ import (
 
 	"github.com/goph/emperror"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/banzaicloud/istio-operator/pkg/apis/istio/v1beta1"
 	istiooperatorclientset "github.com/banzaicloud/istio-operator/pkg/client/clientset/versioned"
 	"github.com/banzaicloud/pipeline/internal/backoff"
+	pConfig "github.com/banzaicloud/pipeline/config"
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
 )
 
@@ -127,10 +129,10 @@ func (m *MeshReconciler) configureIstioCR(istio *v1beta1.Istio, config Config, i
 	istio.Spec.AutoInjectionNamespaces = config.AutoSidecarInjectNamespaces
 	istio.Spec.Version = istioVersion
 	istio.Spec.Pilot = v1beta1.PilotConfiguration{
-		Image: "waynz0r/pilot:latest",
+		Image: viper.GetString(pConfig.IstioPilotImage),
 	}
 	istio.Spec.Mixer = v1beta1.MixerConfiguration{
-		Image: "waynz0r/mixer:latest",
+		Image: viper.GetString(pConfig.IstioMixerImage),
 	}
 
 	if len(m.Remotes) > 0 {

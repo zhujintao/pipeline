@@ -15,7 +15,6 @@
 package istiofeature
 
 import (
-	"github.com/ghodss/yaml"
 	"github.com/goph/emperror"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -26,7 +25,6 @@ import (
 )
 
 const istioOperatorNamespace = "istio-system"
-const istioOperatorDeploymentName = pkgHelm.BanzaiRepository + "/" + "istio-operator"
 const istioOperatorReleaseName = "istio-operator"
 const istioVersion = "1.1"
 
@@ -63,29 +61,13 @@ func (m *MeshReconciler) uninstallIstioOperator(c cluster.CommonCluster, logger 
 
 // installIstioOperator installs istio-operator on a cluster
 func (m *MeshReconciler) installIstioOperator(c cluster.CommonCluster, logger logrus.FieldLogger) error {
-
-	values := map[string]interface{}{
-		"operator": map[string]interface{}{
-			"image": map[string]string{
-				"repository": "waynz0r/istio-operator",
-				"tag":        "0.1.12",
-				"pullPolicy": "Always",
-			},
-		},
-	}
-
-	valuesJson, err := yaml.Marshal(values)
-	if err != nil {
-		return err
-	}
-
 	logger.Debug("installing Istio operator")
-	err = installDeployment(
+	err := installDeployment(
 		c,
 		istioOperatorNamespace,
-		istioOperatorDeploymentName,
+		pkgHelm.BanzaiRepository+"/"+viper.GetString(pConfig.IstioOperatorChartName),
 		istioOperatorReleaseName,
-		valuesJson,
+		[]byte{},
 		viper.GetString(pConfig.IstioOperatorChartVersion),
 		true,
 		m.logger,
