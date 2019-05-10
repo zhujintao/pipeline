@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "61a3735f-f514-4d8c-b584-9255d6ef2a72",
+		"_postman_id": "7dc72c95-b3d6-4a56-bb52-6ba711867e21",
 		"name": "End2End TEST Organizations",
 		"description": "Collection for K8S Cluster CRUD operations through the Banzai Cloud Pipeline API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -2855,6 +2855,80 @@
 					"name": "Features",
 					"item": [
 						{
+							"name": "Get All Features",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "ecfa754d-6d1d-4cf7-87fd-f9d86bf17855",
+										"exec": [
+											"",
+											"if (responseCode.code === 200) {",
+											"    tests[\"Response Code 200\"] = responseCode.code == 200;",
+											"",
+											"}",
+											"else if (responseCode.code === 404) {",
+											"    tests[\"Cluster Node Found!\"] = false",
+											"    postman.setNextRequest(null);",
+											"} else {",
+											"    console.warn(\"Unknown  statusCode! -> \"+ responseCode.code );",
+											"    tests[\"Unknown statusCode! -> \" + responseCode.code ] = false",
+											"    postman.setNextRequest(null);",
+											"",
+											"    ",
+											"}",
+											" ",
+											"",
+											"",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/api/v1/orgs/:orgId/clustergroups/:clusterGroupId/features",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"orgs",
+										":orgId",
+										"clustergroups",
+										":clusterGroupId",
+										"features"
+									],
+									"variable": [
+										{
+											"key": "orgId",
+											"value": "{{orgId}}",
+											"description": "Organization identifier"
+										},
+										{
+											"key": "clusterGroupId",
+											"value": "{{clusterGroupId}}",
+											"description": "Cluster Group identifier"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Enable Feature on Cluster Group",
 							"event": [
 								{
@@ -2899,7 +2973,7 @@
 									"raw": "{\n  \"master\": \"masterClusterName\"\n}"
 								},
 								"url": {
-									"raw": "{{url}}/api/v1/orgs/:orgId/clustergroups/:clusterGroupId/feature/:featureName",
+									"raw": "{{url}}/api/v1/orgs/:orgId/clustergroups/:clusterGroupId/features/:featureName",
 									"host": [
 										"{{url}}"
 									],
@@ -2910,7 +2984,7 @@
 										":orgId",
 										"clustergroups",
 										":clusterGroupId",
-										"feature",
+										"features",
 										":featureName"
 									],
 									"variable": [
@@ -2979,7 +3053,7 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{url}}/api/v1/orgs/:orgId/clustergroups/:clusterGroupId/feature/:featureName",
+									"raw": "{{url}}/api/v1/orgs/:orgId/clustergroups/:clusterGroupId/features/:featureName",
 									"host": [
 										"{{url}}"
 									],
@@ -2990,7 +3064,7 @@
 										":orgId",
 										"clustergroups",
 										":clusterGroupId",
-										"feature",
+										"features",
 										":featureName"
 									],
 									"variable": [
@@ -3008,6 +3082,85 @@
 											"key": "featureName",
 											"value": "federation",
 											"description": "Name of the feature"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Feature Properties",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "ecfa754d-6d1d-4cf7-87fd-f9d86bf17855",
+										"exec": [
+											"",
+											"if (responseCode.code === 200) {",
+											"    tests[\"Response Code 200\"] = responseCode.code == 200;",
+											"",
+											"}",
+											"else if (responseCode.code === 404) {",
+											"    tests[\"Cluster Node Found!\"] = false",
+											"    postman.setNextRequest(null);",
+											"} else {",
+											"    console.warn(\"Unknown  statusCode! -> \"+ responseCode.code );",
+											"    tests[\"Unknown statusCode! -> \" + responseCode.code ] = false",
+											"    postman.setNextRequest(null);",
+											"",
+											"    ",
+											"}",
+											" ",
+											"",
+											"",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"master\": \"masterClusterName\",\n  \"someproperty\": \"whatever\"\n}"
+								},
+								"url": {
+									"raw": "{{url}}/api/v1/orgs/:orgId/clustergroups/:clusterGroupId/features/:featureName",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"orgs",
+										":orgId",
+										"clustergroups",
+										":clusterGroupId",
+										"features",
+										":featureName"
+									],
+									"variable": [
+										{
+											"description": "Organization identifier",
+											"key": "orgId",
+											"value": "{{orgId}}"
+										},
+										{
+											"description": "Cluster Group identifier",
+											"key": "clusterGroupId",
+											"value": "{{clusterGroupId}}"
+										},
+										{
+											"key": "featureName",
+											"value": "federation"
 										}
 									]
 								}
@@ -3046,9 +3199,6 @@
 									}
 								}
 							],
-							"protocolProfileBehavior": {
-								"disableBodyPruning": true
-							},
 							"request": {
 								"method": "GET",
 								"header": [
@@ -3059,10 +3209,10 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"enabled\": true,\n  \"properties\": {\n  \t\"master\": \"sancyxk0xd\"\n  }\n}"
+									"raw": ""
 								},
 								"url": {
-									"raw": "{{url}}/api/v1/orgs/:orgId/clustergroups/:clusterGroupId/feature/:featureName",
+									"raw": "{{url}}/api/v1/orgs/:orgId/clustergroups/:clusterGroupId/features/:featureName",
 									"host": [
 										"{{url}}"
 									],
@@ -3073,7 +3223,7 @@
 										":orgId",
 										"clustergroups",
 										":clusterGroupId",
-										"feature",
+										"features",
 										":featureName"
 									],
 									"variable": [

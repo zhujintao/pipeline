@@ -32,8 +32,8 @@ type Feature struct {
 	Name               string       `json:"name"`
 	ClusterGroup       ClusterGroup `json:"clusterGroup"`
 	Enabled            bool         `json:"enabled"`
-	Properties         interface{}  `json:"properties"`
-	LastReconcileError string       `json:"lastReconcileError"`
+	Properties         interface{}  `json:"properties,omitempty"`
+	LastReconcileError string       `json:"lastReconcileError,omitempty"`
 }
 
 type FeatureHandler interface {
