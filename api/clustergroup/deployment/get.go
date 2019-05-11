@@ -20,6 +20,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/banzaicloud/pipeline/auth"
 	ginutils "github.com/banzaicloud/pipeline/internal/platform/gin/utils"
 )
 
@@ -29,12 +30,13 @@ func (n *API) Get(c *gin.Context) {
 	name := c.Param("name")
 	n.logger.Infof("getting details for cluster group deployment: [%s]", name)
 
-	clusterGroupId, ok := ginutils.UintParam(c, "id")
+	clusterGroupID, ok := ginutils.UintParam(c, "id")
 	if !ok {
 		return
 	}
 
-	clusterGroup, err := n.clusterGroupManager.GetClusterGroupByID(ctx, clusterGroupId)
+	orgID := auth.GetCurrentOrganization(c.Request).ID
+	clusterGroup, err := n.clusterGroupManager.GetClusterGroupByID(ctx, clusterGroupID, orgID)
 	if err != nil {
 		n.errorHandler.Handle(c, err)
 		return

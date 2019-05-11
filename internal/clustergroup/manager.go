@@ -123,9 +123,10 @@ func (g *Manager) CreateClusterGroup(ctx context.Context, name string, orgID uin
 }
 
 // UpdateClusterGroup updates a cluster group
-func (g *Manager) UpdateClusterGroup(ctx context.Context, orgID uint, clusterGroupId uint, name string, members []uint) error {
+func (g *Manager) UpdateClusterGroup(ctx context.Context, clusterGroupID uint, orgID uint, name string, members []uint) error {
 	cgModel, err := g.cgRepo.FindOne(ClusterGroupModel{
-		ID: clusterGroupId,
+		ID:             clusterGroupID,
+		OrganizationID: orgID,
 	})
 	if err != nil {
 		return err
@@ -177,7 +178,7 @@ func (g *Manager) UpdateClusterGroup(ctx context.Context, orgID uint, clusterGro
 		return err
 	}
 
-	clusterGroup, err := g.GetClusterGroupByID(ctx, existingClusterGroup.Id)
+	clusterGroup, err := g.GetClusterGroupByID(ctx, existingClusterGroup.Id, orgID)
 	if err != nil {
 		return err
 	}
@@ -192,9 +193,10 @@ func (g *Manager) UpdateClusterGroup(ctx context.Context, orgID uint, clusterGro
 }
 
 // DeleteClusterGroup deletes a cluster group by id
-func (g *Manager) DeleteClusterGroupByID(ctx context.Context, clusterGroupId uint) error {
+func (g *Manager) DeleteClusterGroupByID(ctx context.Context, orgID uint, clusterGroupID uint) error {
 	cgModel, err := g.cgRepo.FindOne(ClusterGroupModel{
-		ID: clusterGroupId,
+		OrganizationID: orgID,
+		ID:             clusterGroupID,
 	})
 	if err != nil {
 		return err
@@ -259,14 +261,15 @@ func (g *Manager) GetClusterGroupFromModel(ctx context.Context, cg *ClusterGroup
 }
 
 // GetClusterGroupByID gets a cluster group by id
-func (g *Manager) GetClusterGroupByID(ctx context.Context, clusterGroupId uint) (*api.ClusterGroup, error) {
-	return g.GetClusterGroupByIDWithStatus(ctx, clusterGroupId, false)
+func (g *Manager) GetClusterGroupByID(ctx context.Context, clusterGroupID uint, orgID uint) (*api.ClusterGroup, error) {
+	return g.GetClusterGroupByIDWithStatus(ctx, clusterGroupID, orgID, false)
 }
 
 // GetClusterGroupByIDWithStatus gets a cluster group by id - optionally with a status info
-func (g *Manager) GetClusterGroupByIDWithStatus(ctx context.Context, clusterGroupId uint, withStatus bool) (*api.ClusterGroup, error) {
+func (g *Manager) GetClusterGroupByIDWithStatus(ctx context.Context, clusterGroupID uint, orgID uint, withStatus bool) (*api.ClusterGroup, error) {
 	cgModel, err := g.cgRepo.FindOne(ClusterGroupModel{
-		ID: clusterGroupId,
+		OrganizationID: orgID,
+		ID:             clusterGroupID,
 	})
 	if err != nil {
 		return nil, err
@@ -275,10 +278,10 @@ func (g *Manager) GetClusterGroupByIDWithStatus(ctx context.Context, clusterGrou
 }
 
 // GetAllClusterGroups returns every cluster groups
-func (g *Manager) GetAllClusterGroups(ctx context.Context) ([]api.ClusterGroup, error) {
+func (g *Manager) GetAllClusterGroups(ctx context.Context, orgID uint) ([]api.ClusterGroup, error) {
 	groups := make([]api.ClusterGroup, 0)
 
-	clusterGroups, err := g.cgRepo.FindAll()
+	clusterGroups, err := g.cgRepo.FindAll(orgID)
 	if err != nil {
 		return nil, err
 	}

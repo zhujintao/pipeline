@@ -20,13 +20,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/banzaicloud/pipeline/auth"
 	ginutils "github.com/banzaicloud/pipeline/internal/platform/gin/utils"
 )
 
 func (a *API) List(c *gin.Context) {
 	ctx := ginutils.Context(context.Background(), c)
 
-	clusterGroups, err := a.clusterGroupManager.GetAllClusterGroups(ctx)
+	orgID := auth.GetCurrentOrganization(c.Request).ID
+	clusterGroups, err := a.clusterGroupManager.GetAllClusterGroups(ctx, orgID)
 	if err != nil {
 		a.errorHandler.Handle(c, err)
 		return

@@ -39,7 +39,7 @@ func (n *API) Update(c *gin.Context) {
 	}
 
 	orgID := auth.GetCurrentOrganization(c.Request).ID
-	err := n.clusterGroupManager.UpdateClusterGroup(ctx, orgID, clusterGroupId, req.Name, req.Members)
+	err := n.clusterGroupManager.UpdateClusterGroup(ctx, clusterGroupId, orgID, req.Name, req.Members)
 	if err != nil {
 		n.errorHandler.Handle(c, err)
 		return

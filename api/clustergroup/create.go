@@ -34,8 +34,8 @@ func (n *API) Create(c *gin.Context) {
 		return
 	}
 
-	orgId := auth.GetCurrentOrganization(c.Request).ID
-	id, err := n.clusterGroupManager.CreateClusterGroup(ctx, req.Name, orgId, req.Members)
+	orgID := auth.GetCurrentOrganization(c.Request).ID
+	id, err := n.clusterGroupManager.CreateClusterGroup(ctx, req.Name, orgID, req.Members)
 	if err != nil {
 		n.errorHandler.Handle(c, err)
 		return

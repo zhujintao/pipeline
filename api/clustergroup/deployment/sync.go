@@ -33,12 +33,13 @@ func (n *API) Sync(c *gin.Context) {
 	name := c.Param("name")
 	n.logger.Infof("sync cluster group deployment: [%s]", name)
 
-	clusterGroupId, ok := gutils.UintParam(c, "id")
+	clusterGroupID, ok := gutils.UintParam(c, "id")
 	if !ok {
 		return
 	}
 
-	clusterGroup, err := n.clusterGroupManager.GetClusterGroupByID(ctx, clusterGroupId)
+	orgID := auth.GetCurrentOrganization(c.Request).ID
+	clusterGroup, err := n.clusterGroupManager.GetClusterGroupByID(ctx, clusterGroupID, orgID)
 	if err != nil {
 		n.errorHandler.Handle(c, err)
 		return

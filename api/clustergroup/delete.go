@@ -20,18 +20,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/banzaicloud/pipeline/auth"
 	ginutils "github.com/banzaicloud/pipeline/internal/platform/gin/utils"
 )
 
 func (n *API) Delete(c *gin.Context) {
 	ctx := ginutils.Context(context.Background(), c)
 
-	clusterGroupId, ok := ginutils.UintParam(c, "id")
+	clusterGroupID, ok := ginutils.UintParam(c, "id")
 	if !ok {
 		return
 	}
 
-	err := n.clusterGroupManager.DeleteClusterGroupByID(ctx, clusterGroupId)
+	orgID := auth.GetCurrentOrganization(c.Request).ID
+	err := n.clusterGroupManager.DeleteClusterGroupByID(ctx, orgID, clusterGroupID)
 	if err != nil {
 		n.errorHandler.Handle(c, err)
 		return
