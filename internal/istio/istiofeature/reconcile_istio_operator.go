@@ -15,6 +15,7 @@
 package istiofeature
 
 import (
+	"github.com/ghodss/yaml"
 	"github.com/goph/emperror"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -27,6 +28,11 @@ import (
 const istioOperatorNamespace = "istio-system"
 const istioOperatorReleaseName = "istio-operator"
 const istioVersion = "1.1"
+
+type OperatorImage struct {
+	Repository string `json:"repository,omitempty"`
+	Tag        string `json:"tag,omitempty"`
+}
 
 func (m *MeshReconciler) ReconcileIstioOperator(desiredState DesiredState) error {
 	m.logger.Debug("reconciling Istio operator")
@@ -62,12 +68,36 @@ func (m *MeshReconciler) uninstallIstioOperator(c cluster.CommonCluster, logger 
 // installIstioOperator installs istio-operator on a cluster
 func (m *MeshReconciler) installIstioOperator(c cluster.CommonCluster, logger logrus.FieldLogger) error {
 	logger.Debug("installing Istio operator")
-	err := installDeployment(
+
+	image := &OperatorImage{}
+	values := map[string]interface{}{
+		"affinity":    cluster.GetHeadNodeAffinity(c),
+		"tolerations": cluster.GetHeadNodeTolerations(),
+		"operator": map[string]*OperatorImage{
+			"image": image,
+		},
+	}
+
+	imageRepository := viper.GetString(pConfig.IstioOperatorImageRepository)
+	if imageRepository != "" {
+		image.Repository = imageRepository
+	}
+	imageTag := viper.GetString(pConfig.IstioOperatorImageTag)
+	if imageTag != "" {
+		image.Tag = imageTag
+	}
+
+	valuesOverride, err := yaml.Marshal(values)
+	if err != nil {
+		return emperror.Wrap(err, "could not marshal chart value overrides")
+	}
+
+	err = installDeployment(
 		c,
 		istioOperatorNamespace,
 		pkgHelm.BanzaiRepository+"/"+viper.GetString(pConfig.IstioOperatorChartName),
 		istioOperatorReleaseName,
-		[]byte{},
+		valuesOverride,
 		viper.GetString(pConfig.IstioOperatorChartVersion),
 		true,
 		m.logger,
