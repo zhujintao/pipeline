@@ -291,11 +291,11 @@ func init() {
 
 	viper.SetDefault("gitlab.baseURL", "https://gitlab.com/")
 
-	viper.SetDefault(IstioOperatorChartVersion, "0.0.7")
+	viper.SetDefault(IstioOperatorChartVersion, "0.0.6")
 	viper.SetDefault(IstioGrafanaDashboardLocation, filepath.Join(pwd, "etc", "dashboards", "istio"))
 	viper.SetDefault(IstioOperatorChartName, "istio-operator")
 	viper.SetDefault(IstioOperatorImageRepository, "")
-	viper.SetDefault(IstioOperatorImageTag, "")
+	viper.SetDefault(IstioOperatorImageTag, "0.1.12")
 	viper.SetDefault(IstioPilotImage, "banzaicloud/istio-pilot:1.1.4-bzc")
 	viper.SetDefault(IstioMixerImage, "banzaicloud/istio-mixer:1.1.4-bzc")
 
