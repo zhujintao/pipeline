@@ -127,11 +127,15 @@ func (m *MeshReconciler) configureIstioCR(istio *v1beta1.Istio, config Config, i
 	istio.Spec.MTLS = config.EnableMTLS
 	istio.Spec.AutoInjectionNamespaces = config.AutoSidecarInjectNamespaces
 	istio.Spec.Version = istioVersion
+	istio.Spec.Gateways.IngressConfig.MaxReplicas = 1
+	istio.Spec.Gateways.EgressConfig.MaxReplicas = 1
 	istio.Spec.Pilot = v1beta1.PilotConfiguration{
-		Image: viper.GetString(pConfig.IstioPilotImage),
+		Image:       viper.GetString(pConfig.IstioPilotImage),
+		MaxReplicas: 1,
 	}
 	istio.Spec.Mixer = v1beta1.MixerConfiguration{
-		Image: viper.GetString(pConfig.IstioMixerImage),
+		Image:       viper.GetString(pConfig.IstioMixerImage),
+		MaxReplicas: 1,
 	}
 
 	if len(m.Remotes) > 0 {
