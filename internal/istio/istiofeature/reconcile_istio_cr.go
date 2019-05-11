@@ -16,7 +16,6 @@ package istiofeature
 
 import (
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/goph/emperror"
@@ -27,8 +26,8 @@ import (
 
 	"github.com/banzaicloud/istio-operator/pkg/apis/istio/v1beta1"
 	istiooperatorclientset "github.com/banzaicloud/istio-operator/pkg/client/clientset/versioned"
-	"github.com/banzaicloud/pipeline/internal/backoff"
 	pConfig "github.com/banzaicloud/pipeline/config"
+	"github.com/banzaicloud/pipeline/internal/backoff"
 	pkgCluster "github.com/banzaicloud/pipeline/pkg/cluster"
 )
 
@@ -143,9 +142,9 @@ func (m *MeshReconciler) configureIstioCR(istio *v1beta1.Istio, config Config, i
 		istio.Spec.ControlPlaneSecurityEnabled = enabled
 	}
 
-	if config.BypassEgressTraffic {
-		istio.Spec.IncludeIPRanges = strings.Join(ipRanges.PodIPRanges, ",") + "," + strings.Join(ipRanges.ServiceClusterIPRanges, ",")
-	}
+	// if config.BypassEgressTraffic {
+	// 	istio.Spec.IncludeIPRanges = strings.Join(ipRanges.PodIPRanges, ",") + "," + strings.Join(ipRanges.ServiceClusterIPRanges, ",")
+	// }
 
 	return istio
 }
