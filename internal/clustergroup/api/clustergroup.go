@@ -20,7 +20,7 @@ import (
 
 // CreateRequest describes fields of a create cluster group request
 type CreateRequest struct {
-	Name    string `json:"name" yaml:"name"`
+	Name    string `json:"name" yaml:"name" example:"cluster_group_name"`
 	Members []uint `json:"members" yaml:"members"`
 }
 
@@ -38,13 +38,13 @@ func (g *CreateRequest) Validate() error {
 
 // CreateResponse describes fields of a create cluster group response
 type CreateResponse struct {
-	Name       string `json:"name"`
+	Name       string `json:"name" example:"cluster_group_name"`
 	ResourceID uint   `json:"id"`
 }
 
 // UpdateRequest describes fields of a update cluster group request
 type UpdateRequest struct {
-	Name    string `json:"name" yaml:"name"`
+	Name    string `json:"name" yaml:"name" example:"cluster_group_name"`
 	Members []uint `json:"members,omitempty" yaml:"members"`
 }
 
@@ -62,22 +62,22 @@ func (g *UpdateRequest) Validate() error {
 
 // UpdateResponse describes fields of a update cluster group response
 type UpdateResponse struct {
-	Name       string `json:"name"`
+	Name       string `json:"name" example:"cluster_group_name"`
 	ResourceID uint   `json:"id"`
 }
 
 // Member
 type Member struct {
-	ID           uint   `json:"id" yaml:"id"`
-	Cloud        string `json:"cloud,omitempty" yaml:"cloud"`
-	Distribution string `json:"distribution,omitempty" yaml:"distribution"`
-	Name         string `json:"name" yaml:"name"`
+	ID           uint   `json:"id" yaml:"id" example:"1001"`
+	Cloud        string `json:"cloud,omitempty" yaml:"cloud" example:"google"`
+	Distribution string `json:"distribution,omitempty" yaml:"distribution" example:"gke""`
+	Name         string `json:"name" yaml:"name" example:"clusterName`
 	Status       string `json:"status,omitempty" yaml:"status,omitempty"`
 }
 
 // ClusterGroup
 type ClusterGroup struct {
-	Id              uint             `json:"id" yaml:"id"`
+	Id              uint             `json:"id" yaml:"id" example:"10"`
 	UID             string           `json:"uid" yaml:"uid"`
 	Name            string           `json:"name" yaml:"name"`
 	OrganizationID  uint             `json:"organizationId" yaml:"organizationId"`

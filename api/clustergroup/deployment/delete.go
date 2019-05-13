@@ -25,6 +25,19 @@ import (
 	ginutils "github.com/banzaicloud/pipeline/internal/platform/gin/utils"
 )
 
+// @Summary Delete Cluster Group Deployment
+// @Description deletes a cluster group deployment, also deleting deployments from member clusters
+// @Tags clustergroup deployments
+// @Accept json
+// @Produce json
+// @Param orgid path uint true "Organization ID"
+// @Param clusterGroupId path uint true "Cluster Group ID"
+// @Param deploymentName path string true "release name of a cluster group deployment"
+// @Param force query boolean false "if true cluster group deployment gets deleted even if some deployments can not be deleted from each target cluster"
+// @Success 202 {object} deployment.TargetClusterStatus
+// @Failure 400 {object} common.ErrorResponse Deployment Not Found
+// @Router /api/v1/orgs/{orgid}/clustergroups/{clusterGroupId}/deployments/{deploymentName} [delete]
+// @Security bearerAuth
 func (n *API) Delete(c *gin.Context) {
 
 	ctx := ginutils.Context(context.Background(), c)

@@ -24,6 +24,18 @@ import (
 	ginutils "github.com/banzaicloud/pipeline/internal/platform/gin/utils"
 )
 
+// @Summary Disable Feature of Cluster Group
+// @Description disable feature on all members of a cluster group
+// @Tags clustergroup features
+// @Accept json
+// @Produce json
+// @Param orgid path uint true "Organization ID"
+// @Param clusterGroupId path uint true "Cluster Group ID"
+// @Param featureName path string true "Name of the feature"
+// @Success 200 {string} no content
+// @Failure 400 {object} common.ErrorResponse Feature Not Found
+// @Router /api/v1/orgs/{orgid}/clustergroups/{clusterGroupId}/features/{featureName} [delete]
+// @Security bearerAuth
 func (n *API) Disable(c *gin.Context) {
 	ctx := ginutils.Context(context.Background(), c)
 

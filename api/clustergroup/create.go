@@ -25,6 +25,18 @@ import (
 	ginutils "github.com/banzaicloud/pipeline/internal/platform/gin/utils"
 )
 
+// @Summary Create Cluster Group
+// @Description create a group of clusters, joining clusters together with a name
+// @Tags clustergroups
+// @Accept json
+// @Produce json
+// @Param orgid path int true "Organization ID"
+// @Param cgroup body api.CreateRequest true "Create Cluster Group Request"
+// @Success 201 {object} api.CreateResponse
+// @Failure 400 {object} common.ErrorResponse
+// @Failure 404 {object} common.ErrorResponse
+// @Router /api/v1/orgs/{orgid}/clustergroups [post]
+// @Security bearerAuth
 func (n *API) Create(c *gin.Context) {
 	ctx := ginutils.Context(context.Background(), c)
 

@@ -25,6 +25,18 @@ import (
 	ginutils "github.com/banzaicloud/pipeline/internal/platform/gin/utils"
 )
 
+// @Summary Get Feature of Cluster Group
+// @Description retrieve info about a cluster group feature and it's status on each member cluster
+// @Tags clustergroup features
+// @Accept json
+// @Produce json
+// @Param orgid path uint true "Organization ID"
+// @Param clusterGroupId path uint true "Cluster Group ID"
+// @Param featureName path string true "Name of the feature"
+// @Success 200 {object} api.FeatureResponse
+// @Failure 400 {object} common.ErrorResponse Feature Not Found
+// @Router /api/v1/orgs/{orgid}/clustergroups/{clusterGroupId}/features/{featureName} [get]
+// @Security bearerAuth
 func (n *API) Get(c *gin.Context) {
 	ctx := ginutils.Context(context.Background(), c)
 

@@ -24,6 +24,16 @@ import (
 	ginutils "github.com/banzaicloud/pipeline/internal/platform/gin/utils"
 )
 
+// @Summary List Cluster Groups of an Organization
+// @Description retrieve list of cluster groups of an organization
+// @Tags clustergroups
+// @Accept json
+// @Produce json
+// @Param orgid path int true "Organization ID"
+// @Success 200 {array} api.ClusterGroup
+// @Failure 400 {object} common.ErrorResponse Cluster Group Not Found
+// @Router /api/v1/orgs/{orgid}/clustergroups [get]
+// @Security bearerAuth
 func (a *API) List(c *gin.Context) {
 	ctx := ginutils.Context(context.Background(), c)
 

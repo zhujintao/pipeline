@@ -24,6 +24,17 @@ import (
 	ginutils "github.com/banzaicloud/pipeline/internal/platform/gin/utils"
 )
 
+// @Summary Delete Cluster Group
+// @Description delete a cluster group, disable all enabled features, delete related deployments
+// @Tags clustergroups
+// @Accept json
+// @Produce json
+// @Param orgid path int true "Organization ID"
+// @Param clusterGroupId path int true "Cluster Group ID"
+// @Success 200 {string} no content
+// @Failure 400 {object} common.ErrorResponse
+// @Router /api/v1/orgs/{orgid}/clustergroups/{clusterGroupId} [delete]
+// @Security bearerAuth
 func (n *API) Delete(c *gin.Context) {
 	ctx := ginutils.Context(context.Background(), c)
 

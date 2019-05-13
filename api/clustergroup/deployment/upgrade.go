@@ -26,6 +26,20 @@ import (
 	pkgCommon "github.com/banzaicloud/pipeline/pkg/common"
 )
 
+// @Summary Update Cluster Group Deployment
+// @Description updates a cluster group deployment, installs or upgrades deployment on each member cluster accordingly
+// @Tags clustergroup deployments
+// @Accept json
+// @Produce json
+// @Param orgid path uint true "Organization ID"
+// @Param clusterGroupId path uint true "Cluster Group ID"
+// @Param deploymentName path string true "release name of a cluster group deployment"
+// @Param deployment body deployment.ClusterGroupDeployment true "Deployment Update Request"
+// @Success 202 {object} deployment.CreateUpdateDeploymentResponse
+// @Failure 400 {object} common.ErrorResponse
+// @Failure 404 {object} common.ErrorResponse
+// @Router /api/v1/orgs/{orgid}/clustergroups/{clusterGroupId}/deployments/{deploymentName} [put]
+// @Security bearerAuth
 func (n *API) Upgrade(c *gin.Context) {
 	ctx := ginutils.Context(context.Background(), c)
 

@@ -24,6 +24,18 @@ import (
 	ginutils "github.com/banzaicloud/pipeline/internal/platform/gin/utils"
 )
 
+// @Summary Get Cluster Group Deployment
+// @Description retrieve info about a cluster group deployment and it's status on each member cluster
+// @Tags clustergroup deployments
+// @Accept json
+// @Produce json
+// @Param orgid path uint true "Organization ID"
+// @Param clusterGroupId path uint true "Cluster Group ID"
+// @Param deploymentName path string true "release name of a cluster group deployment"
+// @Success 200 {object} deployment.DeploymentInfo
+// @Failure 400 {object} common.ErrorResponse Deployment Not Found
+// @Router /api/v1/orgs/{orgid}/clustergroups/{clusterGroupId}/deployments/{deploymentName} [get]
+// @Security bearerAuth
 func (n *API) Get(c *gin.Context) {
 	ctx := ginutils.Context(context.Background(), c)
 

@@ -94,6 +94,13 @@ func initLog() *logrus.Entry {
 	return logger
 }
 
+// @title Pipeline API
+// @version 0.3.0
+// @descriptionPipeline v0.3.0 swagger
+// @contact.email info@banzaicloud.com
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "--version" {
 		if commitHash == "" {

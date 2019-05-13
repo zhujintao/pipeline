@@ -26,6 +26,19 @@ import (
 	pkgCommon "github.com/banzaicloud/pipeline/pkg/common"
 )
 
+// @Summary Create Cluster Group Deployment
+// @Description creates a new cluster group deployment, installs or upgrades deployment on each member cluster accordingly
+// @Tags clustergroup deployments
+// @Accept json
+// @Produce json
+// @Param orgid path uint true "Organization ID"
+// @Param clusterGroupId path uint true "Cluster Group ID"
+// @Param deployment body deployment.ClusterGroupDeployment true "Deployment Create Request"
+// @Success 201 {object} deployment.CreateUpdateDeploymentResponse
+// @Failure 400 {object} common.ErrorResponse
+// @Failure 404 {object} common.ErrorResponse
+// @Router /api/v1/orgs/{orgid}/clustergroups/{clusterGroupId}/deployments [post]
+// @Security bearerAuth
 func (n *API) Create(c *gin.Context) {
 	ctx := ginutils.Context(context.Background(), c)
 
@@ -34,22 +47,22 @@ func (n *API) Create(c *gin.Context) {
 		return
 	}
 
-	orgID := auth.GetCurrentOrganization(c.Request).ID
-	clusterGroup, err := n.clusterGroupManager.GetClusterGroupByID(ctx, clusterGroupID, orgID)
+	organization := auth.GetCurrentOrganization(c.Request)
+	if organization == nil {
+		c.JSON(http.StatusBadRequest, pkgCommon.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Organization not found",
+			Error:   "Organization not found",
+		})
+		return
+	}
+
+	clusterGroup, err := n.clusterGroupManager.GetClusterGroupByID(ctx, clusterGroupID, organization.ID)
 	if err != nil {
 		n.errorHandler.Handle(c, err)
 		return
 	}
 
-	organization, err := auth.GetOrganizationById(clusterGroup.OrganizationID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, pkgCommon.ErrorResponse{
-			Code:    http.StatusBadRequest,
-			Message: "Error  getting organization",
-			Error:   err.Error(),
-		})
-		return
-	}
 	var deployment *pkgDep.ClusterGroupDeployment
 	if err := c.ShouldBindJSON(&deployment); err != nil {
 		n.errorHandler.Handle(c, c.Error(err).SetType(gin.ErrorTypeBind))

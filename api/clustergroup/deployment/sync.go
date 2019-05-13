@@ -26,6 +26,20 @@ import (
 	gutils "github.com/banzaicloud/pipeline/internal/platform/gin/utils"
 )
 
+// @Summary Synchronize Cluster Group Deployment
+// @Description install / upgrade deployment to target clusters where deployment is not found or has wrong
+// 	version/values (like somebody deleted, updated the deployment on that given cluster using Single Cluster Deployment API),
+// 	deletes deployment from target clusters which are not member of a cluster group anymore
+// @Tags clustergroup deployments
+// @Accept json
+// @Produce json
+// @Param orgid path uint true "Organization ID"
+// @Param clusterGroupId path uint true "Cluster Group ID"
+// @Param deploymentName path string true "release name of a cluster group deployment"
+// @Success 202 {object} deployment.TargetClusterStatus
+// @Failure 400 {object} common.ErrorResponse Deployment Not Found
+// @Router /api/v1/orgs/{orgid}/clustergroups/{clusterGroupId}/deployments/{deploymentName}/sync [put]
+// @Security bearerAuth
 func (n *API) Sync(c *gin.Context) {
 
 	ctx := gutils.Context(context.Background(), c)
@@ -49,7 +63,7 @@ func (n *API) Sync(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, pkgCommon.ErrorResponse{
 			Code:    http.StatusBadRequest,
-			Message: "Error  getting organization",
+			Message: "Error getting organization",
 			Error:   err.Error(),
 		})
 		return

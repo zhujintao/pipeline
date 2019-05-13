@@ -25,6 +25,19 @@ import (
 	ginutils "github.com/banzaicloud/pipeline/internal/platform/gin/utils"
 )
 
+// @Summary Update Cluster Group
+// @Description update name & member clusters for a cluster group
+// @Tags clustergroups
+// @Accept json
+// @Produce json
+// @Param orgid path int true "Organization ID"
+// @Param clusterGroupId path int true "Cluster Group ID"
+// @Param cgroup body api.UpdateRequest true "Update Cluster Group Request"
+// @Success 202 {object} api.UpdateResponse
+// @Failure 400 {object} common.ErrorResponse Cluster Group Not Found
+// @Failure 404 {object} common.ErrorResponse
+// @Router /api/v1/orgs/{orgid}/clustergroups/{clusterGroupId} [put]
+// @Security bearerAuth
 func (n *API) Update(c *gin.Context) {
 	ctx := ginutils.Context(context.Background(), c)
 	clusterGroupId, ok := ginutils.UintParam(c, "id")
