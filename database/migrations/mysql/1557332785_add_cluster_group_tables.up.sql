@@ -28,7 +28,7 @@ CREATE TABLE `clustergroup_deployments` (
   `organization_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `values` text COLLATE utf8mb4_unicode_ci,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_unique_cid_name` (`cluster_group_id`,`deployment_name`)
+  UNIQUE KEY `idx_unique_cid_rname` (`cluster_group_id`,`deployment_release_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `clustergroup_deployment_target_clusters` (

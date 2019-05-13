@@ -50,7 +50,7 @@ CREATE TABLE "clustergroup_deployments" (
   PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX idx_unique_cid_name ON "clustergroup_deployments"(cluster_group_id, deployment_name);
+CREATE UNIQUE INDEX idx_unique_cid_rname ON "clustergroup_deployments"(cluster_group_id, deployment_release_name);
 
 
 CREATE TABLE "clustergroup_deployment_target_clusters" (

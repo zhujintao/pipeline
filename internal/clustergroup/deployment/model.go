@@ -39,13 +39,13 @@ func (TargetCluster) TableName() string {
 // ClusterGroupDeploymentModel describes a cluster group deployment
 type ClusterGroupDeploymentModel struct {
 	ID                    uint `gorm:"primary_key"`
-	ClusterGroupID        uint `gorm:"unique_index:idx_unique_cid_name"`
+	ClusterGroupID        uint `gorm:"unique_index:idx_unique_cid_rname"`
 	CreatedAt             time.Time
 	UpdatedAt             *time.Time
-	DeploymentName        string `gorm:"unique_index:idx_unique_cid_name"`
+	DeploymentName        string
 	DeploymentVersion     string
 	DeploymentPackage     []byte
-	DeploymentReleaseName string
+	DeploymentReleaseName string `gorm:"unique_index:idx_unique_cid_rname"`
 	Description           string
 	ChartName             string
 	Namespace             string
