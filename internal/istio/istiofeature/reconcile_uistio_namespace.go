@@ -26,9 +26,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func (m *MeshReconciler) ReconcileNamespace(desiredState DesiredState) error {
-	m.logger.Debug("reconciling namespace")
-	defer m.logger.Debug("namespace reconciled")
+func (m *MeshReconciler) ReconcileUistioNamespace(desiredState DesiredState) error {
+	m.logger.Debug("reconciling Uistio namespace")
+	defer m.logger.Debug("Uistio namespace reconciled")
 
 	client, err := m.GetMasterK8sClient()
 	if err != nil {
@@ -36,44 +36,47 @@ func (m *MeshReconciler) ReconcileNamespace(desiredState DesiredState) error {
 	}
 
 	if desiredState == DesiredStatePresent {
-		_, err := client.CoreV1().Namespaces().Get(istioOperatorNamespace, metav1.GetOptions{})
+		_, err := client.CoreV1().Namespaces().Get(uistioNamespace, metav1.GetOptions{})
 		if k8serrors.IsNotFound(err) {
 			_, err := client.CoreV1().Namespaces().Create(&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: istioOperatorNamespace,
+					Name: uistioNamespace,
+					Labels: map[string]string{
+						"istio-injection": "enabled",
+					},
 				},
 			})
 			if err != nil {
 				return emperror.Wrap(err, "could not create namespace")
 			}
+		} else if err != nil {
+			return emperror.Wrap(err, "could not get namespace")
 		}
 	} else {
-		_, err := client.CoreV1().Namespaces().Get(istioOperatorNamespace, metav1.GetOptions{})
+		_, err := client.CoreV1().Namespaces().Get(uistioNamespace, metav1.GetOptions{})
 		if k8serrors.IsNotFound(err) {
 			return nil
-		}
-
-		if err != nil && !k8serrors.IsNotFound(err) {
+		} else if err != nil {
 			return emperror.Wrap(err, "could not get namespace")
 		}
 
-		err = client.CoreV1().Namespaces().Delete(istioOperatorNamespace, &metav1.DeleteOptions{})
+		err = client.CoreV1().Namespaces().Delete(uistioNamespace, &metav1.DeleteOptions{})
 		if err != nil {
 			return emperror.Wrap(err, "could not delete namespace")
 		}
 
-		err = m.waitForIstioNamespaceBeDeleted(client)
+		err = m.waitForUistioNamespaceBeDeleted(client)
 		if err != nil {
-			return emperror.Wrap(err, "timeout during waiting for Istio namespace to be deleted")
+			return emperror.Wrap(err, "timeout during waiting for Uistio namespace to be deleted")
 		}
 	}
 
 	return nil
 }
 
-// waitForIstioNamespaceBeDeleted wait for Istio namespace to be deleted
-func (m *MeshReconciler) waitForIstioNamespaceBeDeleted(client *kubernetes.Clientset) error {
-	m.logger.Debug("waiting for Istio namespace to be deleted")
+// waitForUistioNamespaceBeDeleted wait for Uistio namespace to be deleted
+func (m *MeshReconciler) waitForUistioNamespaceBeDeleted(client *kubernetes.Clientset) error {
+	m.logger.Debug("waiting for Uistio namespace to be deleted")
 
 	var backoffConfig = backoff.ConstantBackoffConfig{
 		Delay:      time.Duration(backoffDelaySeconds) * time.Second,
@@ -82,12 +85,12 @@ func (m *MeshReconciler) waitForIstioNamespaceBeDeleted(client *kubernetes.Clien
 	var backoffPolicy = backoff.NewConstantBackoffPolicy(&backoffConfig)
 
 	err := backoff.Retry(func() error {
-		_, err := client.CoreV1().Namespaces().Get(istioOperatorNamespace, metav1.GetOptions{})
+		_, err := client.CoreV1().Namespaces().Get(uistioNamespace, metav1.GetOptions{})
 		if k8serrors.IsNotFound(err) {
 			return nil
 		}
 
-		return errors.New("Istio namespace still exists")
+		return errors.New("Uistio namespace still exists")
 	}, backoffPolicy)
 
 	if err != nil {

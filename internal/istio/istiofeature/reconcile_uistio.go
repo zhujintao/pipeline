@@ -17,6 +17,7 @@ package istiofeature
 import (
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/goph/emperror"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -29,7 +30,7 @@ import (
 	pkgHelm "github.com/banzaicloud/pipeline/pkg/helm"
 )
 
-const uistioNamespace = "istio-system"
+const uistioNamespace = "pipeline-mesh"
 const uistioDeploymentName = pkgHelm.BanzaiRepository + "/" + "uistio"
 const uistioReleaseName = "uistio"
 
@@ -98,12 +99,31 @@ func (m *MeshReconciler) uninstallUistio(c cluster.CommonCluster, logger logrus.
 func (m *MeshReconciler) installUistio(c cluster.CommonCluster, logger logrus.FieldLogger) error {
 	logger.Debug("installing Uistio")
 
-	err := installDeployment(
+	values := map[string]interface{}{
+		"affinity":    cluster.GetHeadNodeAffinity(c),
+		"tolerations": cluster.GetHeadNodeTolerations(),
+		"istio": map[string]interface{}{
+			"CRName":    m.Configuration.name,
+			"namespace": istioOperatorNamespace,
+		},
+		"prometheus": map[string]interface{}{
+			"enabled": true,
+			"host":    "monitor-prometheus-server.pipeline-system.svc.cluster.local",
+			"url":     "http://monitor-prometheus-server.pipeline-system.svc.cluster.local/prometheus",
+		},
+	}
+
+	valuesOverride, err := yaml.Marshal(values)
+	if err != nil {
+		return emperror.Wrap(err, "could not marshal chart value overrides")
+	}
+
+	err = installDeployment(
 		c,
 		uistioNamespace,
 		uistioDeploymentName,
 		uistioReleaseName,
-		[]byte{},
+		valuesOverride,
 		viper.GetString(pConfig.UistioChartVersion),
 		true,
 		m.logger,
