@@ -255,7 +255,10 @@ func main() {
 			workflowClient,
 		),
 	}
-	clusterAPI := api.NewClusterAPI(clusterManager, clusterGetter, workflowClient, log, errorHandler, externalBaseURL, clusterCreators, clusterDeleters)
+	clusterUpdaters := api.ClusterUpdaters{
+		PKEOnAzure: azurePKEDriver.MakeAzurePKEClusterUpdater(),
+	}
+	clusterAPI := api.NewClusterAPI(clusterManager, clusterGetter, workflowClient, log, errorHandler, externalBaseURL, clusterCreators, clusterDeleters, clusterUpdaters)
 
 	nplsApi := api.NewNodepoolManagerAPI(clusterGetter, log, errorHandler)
 

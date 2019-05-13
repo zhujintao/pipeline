@@ -59,6 +59,7 @@ type ClusterAPI struct {
 	errorHandler    emperror.Handler
 	clusterCreators ClusterCreators
 	clusterDeleters ClusterDeleters
+	clusterUpdaters ClusterUpdaters
 }
 
 type ClusterCreators struct {
@@ -67,6 +68,10 @@ type ClusterCreators struct {
 
 type ClusterDeleters struct {
 	PKEOnAzure driver.AzurePKEClusterDeleter
+}
+
+type ClusterUpdaters struct {
+	PKEOnAzure driver.AzurePKEClusterUpdater
 }
 
 // NewClusterAPI returns a new ClusterAPI instance.
@@ -79,6 +84,7 @@ func NewClusterAPI(
 	externalBaseURL string,
 	clusterCreators ClusterCreators,
 	clusterDeleters ClusterDeleters,
+	clusterUpdaters ClusterUpdaters,
 
 ) *ClusterAPI {
 	return &ClusterAPI{
@@ -91,6 +97,7 @@ func NewClusterAPI(
 		errorHandler:    errorHandler,
 		clusterCreators: clusterCreators,
 		clusterDeleters: clusterDeleters,
+		clusterUpdaters: clusterUpdaters,
 	}
 }
 
