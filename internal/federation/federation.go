@@ -41,8 +41,8 @@ func NewFederationHandler(
 
 func (f *Handler) ReconcileState(featureState api.Feature) error {
 	logger := f.logger.WithField("clusterGroupName", featureState.ClusterGroup.Name)
-	logger.Info("reconcile federation")
-
+	logger.Infof("reconcile federation state, enabled: %v", featureState.Enabled)
+	//time.Sleep(20 * time.Second)
 	return nil
 }
 

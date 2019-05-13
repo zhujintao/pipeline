@@ -22,6 +22,7 @@ CREATE TABLE "clustergroup_features" (
   "cluster_group_id" integer,
   "enabled" boolean,
   "properties" json,
+  "reconcile_state" text,
   "last_reconcile_error" text,
   PRIMARY KEY ("id")
 );

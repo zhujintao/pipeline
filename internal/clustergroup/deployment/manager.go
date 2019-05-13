@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/goph/emperror"
 	"github.com/jinzhu/gorm"
@@ -539,8 +540,11 @@ func (m CGDeploymentManager) deleteDeploymentFromCluster(clusterId uint, apiClus
 
 	err = helm.DeleteDeployment(releaseName, k8sConfig)
 	if err != nil {
-		log.Error(emperror.Wrap(err, "failed to delete cluster group deployment from cluster").Error())
-		return err
+		// deployment not found error is ok in this case
+		if !strings.Contains(err.Error(), "not found") {
+			log.Error(emperror.Wrap(err, "failed to delete cluster group deployment from cluster").Error())
+			return err
+		}
 	}
 	return nil
 }

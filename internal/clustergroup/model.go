@@ -59,6 +59,7 @@ type ClusterGroupFeatureModel struct {
 	ClusterGroupID     uint
 	Enabled            bool
 	Properties         []byte `sql:"type:json"`
+	ReconcileState     string
 	LastReconcileError string
 }
 

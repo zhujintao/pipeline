@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 
 	"github.com/goph/emperror"
+	"github.com/pkg/errors"
 
 	"github.com/banzaicloud/pipeline/internal/clustergroup/api"
 )
@@ -87,9 +88,23 @@ func (g *Manager) ReconcileFeatures(clusterGroup api.ClusterGroup, onlyEnabledHa
 				g.logger.Error(emperror.Wrap(err, "error reading cluster group feature model").Error())
 				continue
 			}
+
+			if featureModel.ReconcileState == api.ReconcileInProgress {
+				return emperror.With(errors.New("reconcile of future is in progress"),
+					"featureName", featureModel.Name, "clusterGroupID", featureModel.ClusterGroupID)
+			}
+
+			// set feature reconcile state to ReconcileInProgress
+			featureModel.ReconcileState = api.ReconcileInProgress
+			g.cgRepo.SaveFeature(&featureModel)
+
 			err = handler.ReconcileState(*feature)
 			if err != nil {
 				featureModel.LastReconcileError = err.Error()
+				featureModel.ReconcileState = api.ReconcileFailed
+				g.cgRepo.SaveFeature(&featureModel)
+			} else {
+				featureModel.ReconcileState = api.ReconcileSucceded
 				g.cgRepo.SaveFeature(&featureModel)
 			}
 		}
@@ -108,13 +123,14 @@ func (g *Manager) DisableFeatures(clusterGroup api.ClusterGroup) error {
 
 	for name, feature := range features {
 		if feature.Enabled {
-			handler, err := g.GetFeatureHandler(name)
-			if err != nil {
-				return err
-			}
-			feature.Enabled = false
-			handler.ReconcileState(feature)
+			g.DisableFeature(name, &clusterGroup)
 		}
+	}
+
+	// call feature handlers on members update
+	err = g.ReconcileFeatures(clusterGroup, false)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -158,6 +174,7 @@ func (g *Manager) getFeatureFromModel(clusterGroup api.ClusterGroup, model *Clus
 		Properties:         featureProperties,
 		Name:               model.Name,
 		Enabled:            model.Enabled,
+		ReconcileState:     model.ReconcileState,
 		LastReconcileError: model.LastReconcileError,
 	}, nil
 }

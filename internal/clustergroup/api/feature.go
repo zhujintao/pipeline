@@ -24,8 +24,15 @@ type FeatureResponse struct {
 	Enabled            bool            `json:"enabled"`
 	Properties         FeatureRequest  `json:"properties,omitempty" yaml:"properties"`
 	Status             map[uint]string `json:"status,omitempty" yaml:"status"`
+	ReconcileState     string          `json:"reconcileState,omitempty" yaml:"reconcileState"`
 	LastReconcileError string          `json:"lastReconcileError,omitempty" yaml:"lastReconcileError"`
 }
+
+const ReconcileInProgress = "IN_PROGRESS"
+
+const ReconcileSucceded = "SUCCESS"
+
+const ReconcileFailed = "FAILED"
 
 // Feature
 type Feature struct {
@@ -33,6 +40,7 @@ type Feature struct {
 	ClusterGroup       ClusterGroup `json:"clusterGroup"`
 	Enabled            bool         `json:"enabled"`
 	Properties         interface{}  `json:"properties,omitempty"`
+	ReconcileState     string       `json:"reconcileState,omitempty"`
 	LastReconcileError string       `json:"lastReconcileError,omitempty"`
 }
 
