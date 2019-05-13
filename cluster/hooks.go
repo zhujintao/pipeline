@@ -659,8 +659,8 @@ func InstallHelmPostHook(cluster CommonCluster) error {
 		headNodePoolName := viper.GetString(pipConfig.PipelineHeadNodePoolName)
 		if headNodePoolName != "" {
 			if cluster.NodePoolExists(headNodePoolName) {
-				helmInstall.Tolerations = getHeadNodeTolerations()                   // add toleration for system node
-				helmInstall.NodeAffinity = getHeadNodeAffinity(cluster).NodeAffinity // try to schedule to system node
+				helmInstall.Tolerations = GetHeadNodeTolerations()                   // add toleration for system node
+				helmInstall.NodeAffinity = GetHeadNodeAffinity(cluster).NodeAffinity // try to schedule to system node
 			} else {
 				log.Warnf("head node pool %q not found, tiller deployment is not targeted to any node pool.", headNodePoolName)
 			}
