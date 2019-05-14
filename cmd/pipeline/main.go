@@ -236,10 +236,11 @@ func main() {
 		go monitor.NewSpotMetricsExporter(context.Background(), clusterManager, log.WithField("subsystem", "spot-metrics-exporter")).Run(viper.GetDuration(config.SpotMetricsCollectionInterval))
 	}
 
+	gormAzurePKEClusterStore := azurePKEAdapter.NewGORMAzurePKEClusterStore(db)
 	clusterCreators := api.ClusterCreators{
 		PKEOnAzure: azurePKEDriver.MakeAzurePKEClusterCreator(
 			log,
-			azurePKEAdapter.NewGORMAzurePKEClusterStore(db),
+			gormAzurePKEClusterStore,
 			workflowClient,
 			externalBaseURL,
 		),
@@ -251,12 +252,18 @@ func main() {
 			log,
 			secret.Store,
 			statusChangeDurationMetric,
-			azurePKEAdapter.NewGORMAzurePKEClusterStore(db),
+			gormAzurePKEClusterStore,
 			workflowClient,
 		),
 	}
 	clusterUpdaters := api.ClusterUpdaters{
-		PKEOnAzure: azurePKEDriver.MakeAzurePKEClusterUpdater(),
+		PKEOnAzure: azurePKEDriver.MakeAzurePKEClusterUpdater(
+			log,
+			externalBaseURL,
+			secret.Store,
+			gormAzurePKEClusterStore,
+			workflowClient,
+		),
 	}
 	clusterAPI := api.NewClusterAPI(clusterManager, clusterGetter, workflowClient, log, errorHandler, externalBaseURL, clusterCreators, clusterDeleters, clusterUpdaters)
 
