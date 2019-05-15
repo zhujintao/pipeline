@@ -152,7 +152,7 @@ func (a *AzurePkeCluster) UpdateCluster(*pkgCluster.UpdateClusterRequest, uint) 
 }
 
 func (a *AzurePkeCluster) UpdateNodePools(*pkgCluster.UpdateNodePoolsRequest, uint) error {
-	panic("not implemented")
+	return errors.New("not implemented") // TODO
 }
 
 func (a *AzurePkeCluster) CheckEqualityToUpdate(*pkgCluster.UpdateClusterRequest) error {
